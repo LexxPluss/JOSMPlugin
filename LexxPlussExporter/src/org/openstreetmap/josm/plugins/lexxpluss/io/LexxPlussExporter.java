@@ -3,6 +3,10 @@ package org.openstreetmap.josm.plugins.lexxpluss.io;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -28,6 +32,8 @@ import java.text.MessageFormat;
 import javax.swing.JOptionPane;
 
 import org.openstreetmap.josm.actions.ExtensionFileFilter;
+import org.openstreetmap.josm.data.coor.LatLon;
+import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
@@ -57,10 +63,28 @@ public class LexxPlussExporter extends OsmExporter {
     @Override
     protected void doSave(File file, OsmDataLayer layer) throws IOException {
 
-        //
-        // TODO Layer Deepcopy And Convert
-        //
-        System.out.println("LexxPluss Plugin doSave");
+        DataSet dataSet = layer.getDataSet();
+        System.out.println("dataSet Count=" + dataSet.getNodes().size());
+        dataSet.lock();
+        List<Node> backup = new ArrayList<Node>();
+        Collection<Node> cnodes = dataSet.getNodes();
+        List<Node> nodes = new ArrayList<Node>(cnodes);
+        for (Node node : nodes) {
+            // 現在のノード情報をバックアップする
+            backup.add(new Node(node));
+            //
+            // TODO 座標変換
+            //
+            node.setCoor(new LatLon(0.0, 0.0));
+        }
+        dataSet.unlock();
         super.doSave(file, layer);
+
+        // 元のノード情報を復元する
+        dataSet.lock();
+        for (int i = 0; i < nodes.size(); i++) {
+            nodes.get(i).setCoor(backup.get(i).getCoor());
+        }
+        dataSet.unlock();
     }
 }
