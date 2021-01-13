@@ -40,6 +40,7 @@ import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.io.Compression;
 import org.openstreetmap.josm.io.OsmWriter;
 import org.openstreetmap.josm.io.OsmWriterFactory;
+import org.openstreetmap.josm.plugins.lexxpluss.LexxPlussUtil;
 import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.Logging;
 import org.openstreetmap.josm.tools.Utils;
@@ -64,18 +65,15 @@ public class LexxPlussExporter extends OsmExporter {
     protected void doSave(File file, OsmDataLayer layer) throws IOException {
 
         DataSet dataSet = layer.getDataSet();
-        System.out.println("dataSet Count=" + dataSet.getNodes().size());
+        //System.out.println("dataSet Count=" + dataSet.getNodes().size());
         dataSet.lock();
         List<Node> backup = new ArrayList<Node>();
-        Collection<Node> cnodes = dataSet.getNodes();
-        List<Node> nodes = new ArrayList<Node>(cnodes);
+        List<Node> nodes = new ArrayList<Node>(dataSet.getNodes());
         for (Node node : nodes) {
             // 現在のノード情報をバックアップする
             backup.add(new Node(node));
-            //
-            // TODO 座標変換
-            //
-            node.setCoor(new LatLon(0.0, 0.0));
+            // 座標変換
+            node.setCoor(LexxPlussUtil.DesToUtm(node.getCoor()));
         }
         dataSet.unlock();
         super.doSave(file, layer);
