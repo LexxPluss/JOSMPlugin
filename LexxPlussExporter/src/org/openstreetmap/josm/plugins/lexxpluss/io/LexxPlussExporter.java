@@ -53,6 +53,9 @@ import org.openstreetmap.josm.plugins.piclayer.transform.PictureTransform;
 
 import org.openstreetmap.josm.plugins.piclayer.layer.PicLayerAbstract;
 import java.awt.geom.NoninvertibleTransformException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * OSM Exporter for o5n format (*.osn).
@@ -76,6 +79,7 @@ public class LexxPlussExporter extends OsmExporter {
         Image image = null;
         AffineTransform transform = null;
         EastNorth imagePosition = null;
+        PicLayerAbstract picLayer = null;
         List<Layer> layers = MainApplication.getLayerManager().getVisibleLayersInZOrder();
         System.out.println("layers Count=" + layers.size());
         for(Layer _layer : layers) {
@@ -83,7 +87,7 @@ public class LexxPlussExporter extends OsmExporter {
             System.out.println("Class Name=" + _layer.getClass().getName());
             if (_layer instanceof PicLayerAbstract) {
                 System.out.println("PicLayerAbstract");
-                PicLayerAbstract picLayer = (PicLayerAbstract)_layer;
+                picLayer = (PicLayerAbstract)_layer;
                 image = picLayer.getImage();
                 System.out.println("Image Width=" + image.getWidth(null));
                 System.out.println("Image Height=" + image.getHeight(null));
@@ -96,6 +100,7 @@ public class LexxPlussExporter extends OsmExporter {
                 System.out.println("Transform ScaleY =" + transform.getScaleY());
                 System.out.println("Transform TransX =" + transform.getTranslateX());
                 System.out.println("Transform TransY =" + transform.getTranslateY());
+                System.out.println("InitialImageScale =" + getInitialImageScale(picLayer));
             }
             if (_layer instanceof OsmDataLayer) {
                 System.out.println("OsmDataLayer");
@@ -128,9 +133,12 @@ public class LexxPlussExporter extends OsmExporter {
             ex.printStackTrace();
         }
         ofs = 0;
+        double initialImageScale = getInitialImageScale(picLayer);
+        double hw = image.getWidth(null) / 2.0;
+        double hh = image.getHeight(null) / 2.0;
         for (Node node : nodes) {
-            double x = dstPts[ofs * 2];
-            double y = dstPts[ofs * 2 + 1];
+            double x = dstPts[ofs * 2] * initialImageScale / 100.0 + hw;
+            double y = dstPts[ofs * 2 + 1] * initialImageScale / 100.0 + hh;
             System.out.println("Dst =(" + x + "," + y + ")");
             node.setEastNorth(new EastNorth(x, y));
             ofs++;
@@ -140,11 +148,68 @@ public class LexxPlussExporter extends OsmExporter {
         // 基底クラスのファイル保存メソッドを実行する
         super.doSave(file, layer);
 
-        // 元のノード情報をバックアップから復元する(UTM座標系→緯度経度)
+        // 元のノード情報をバックアップから復元する
         dataSet.lock();
         for (int i = 0; i < nodes.size(); i++) {
             nodes.get(i).setCoor(backup.get(i).getCoor());
         }
         dataSet.unlock();
+    }
+
+    private double getInitialImageScale(PicLayerAbstract picLayer) {
+        double r = 0.0;
+        try {
+            // PicLayerAbstractは抽象クラスなので子クラスから親クラスを参照する
+            Field f = picLayer.getClass().getSuperclass().getDeclaredField("initialImageScale");
+            f.setAccessible(true);
+            r = (double)f.get(picLayer);
+        }
+        catch (NoSuchFieldException nsfe) {
+            nsfe.printStackTrace();
+        }
+        catch (IllegalAccessException iae) {
+            iae.printStackTrace();
+        }
+        return r;
+    }
+
+    private double getMetersPerEasting(PicLayerAbstract picLayer, EastNorth en) {
+        double r = 0.0;
+        try {
+            // PicLayerAbstractは抽象クラスなので子クラスから親クラスを参照する
+            Method m = picLayer.getClass().getSuperclass().getMethod("getMetersPerEasting");
+            m.setAccessible(true);
+            r = (double)m.invoke(picLayer, en); 
+        }
+        catch (NoSuchMethodException nsme) {
+            nsme.printStackTrace();
+        }
+        catch (InvocationTargetException ite) {
+            ite.printStackTrace();
+        }
+        catch (IllegalAccessException iae) {
+            iae.printStackTrace();
+        }
+        return r;
+    }
+
+    private double getMetersPerNorthing(PicLayerAbstract picLayer, EastNorth en) {
+        double r = 0.0;
+        try {
+            // PicLayerAbstractは抽象クラスなので子クラスから親クラスを参照する
+            Method m = picLayer.getClass().getSuperclass().getMethod("getMetersPerNorthing");
+            m.setAccessible(true);
+            r = (double)m.invoke(picLayer, en); 
+        }
+        catch (NoSuchMethodException nsme) {
+            nsme.printStackTrace();
+        }
+        catch (InvocationTargetException ite) {
+            ite.printStackTrace();
+        }
+        catch (IllegalAccessException iae) {
+            iae.printStackTrace();
+        }
+        return r;
     }
 }
