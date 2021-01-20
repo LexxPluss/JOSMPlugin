@@ -113,7 +113,7 @@ public class LexxPlussExporter extends OsmExporter {
         List<Node> backup = new ArrayList<Node>();
         List<Node> nodes = new ArrayList<Node>(dataSet.getNodes());
         double[] srcPts = new double[nodes.size() * 2];
-        double[] dstPts = new double[srcPts.length]; 
+        double[] dstPts = new double[srcPts.length];
         for (Node node : nodes) {
             // 座標変換
             EastNorth pos = node.getEastNorth();
@@ -144,13 +144,8 @@ public class LexxPlussExporter extends OsmExporter {
         double hh = image.getHeight(null) / 2.0;
         //System.out.println("ImageHafeSize =(" + hw + "," + hh + ")");
         for (Node node : nodes) {
-            //System.out.println("DstPts =(" + dstPts[ofs * 2] + "," + dstPts[ofs * 2 + 1] + ")");
-            //double x = dstPts[ofs * 2]  * 100.0 /  initialImageScale / 2.0837706894099863 * 0.8214007020307434 + hw;
-            //double y = dstPts[ofs * 2 + 1] * 100.0 / initialImageScale / 2.0837706894099863 * 0.8214007118841223 + hh;
-            //double x = dstPts[ofs * 2]  * 100.0 /  initialImageScale * 0.8214007020307434 + hw;
-            //double y = dstPts[ofs * 2 + 1] * 100.0 / initialImageScale * 0.8214007118841223 + hh;
             double x = dstPts[ofs * 2]  * 100.0 /  initialImageScale * getMetersPerEasting(picLayer, imagePosition) + hw;
-            double y = dstPts[ofs * 2 + 1] * 100.0 / initialImageScale * getMetersPerNorthing(picLayer, imagePosition) + hh;
+            double y = -dstPts[ofs * 2 + 1] * 100.0 / initialImageScale * getMetersPerNorthing(picLayer, imagePosition) + hh;
             System.out.println("Dst =(" + x + "," + y + ")");
             node.setCoor(new LatLon(x, y));
             ofs++;
@@ -169,7 +164,7 @@ public class LexxPlussExporter extends OsmExporter {
     }
 
     private double getInitialImageScale(PicLayerAbstract picLayer) {
-        double r = 0.0;
+        double r = Double.NaN;
         try {
             // PicLayerAbstractは抽象クラスなので子クラスから親クラスを参照する
             Field f = picLayer.getClass().getSuperclass().getDeclaredField("initialImageScale");
@@ -186,10 +181,11 @@ public class LexxPlussExporter extends OsmExporter {
     }
 
     private double getMetersPerEasting(PicLayerAbstract picLayer, EastNorth en) {
-        double r = 0.0;
+        double r = Double.NaN;
         try {
             // PicLayerAbstractは抽象クラスなので子クラスから親クラスを参照する
-            Method m = picLayer.getClass().getSuperclass().getDeclaredMethod("getMetersPerEasting", org.openstreetmap.josm.data.coor.EastNorth.class);
+            //Method m = picLayer.getClass().getSuperclass().getDeclaredMethod("getMetersPerEasting", org.openstreetmap.josm.data.coor.EastNorth.class);
+            Method m = picLayer.getClass().getSuperclass().getDeclaredMethod("getMetersPerEasting", EastNorth.class);
             m.setAccessible(true);
             r = (double)m.invoke(picLayer, en); 
         }
@@ -206,10 +202,11 @@ public class LexxPlussExporter extends OsmExporter {
     }
 
     private double getMetersPerNorthing(PicLayerAbstract picLayer, EastNorth en) {
-        double r = 0.0;
+        double r = Double.NaN;
         try {
             // PicLayerAbstractは抽象クラスなので子クラスから親クラスを参照する
-            Method m = picLayer.getClass().getSuperclass().getDeclaredMethod("getMetersPerNorthing", org.openstreetmap.josm.data.coor.EastNorth.class);
+            //Method m = picLayer.getClass().getSuperclass().getDeclaredMethod("getMetersPerNorthing", org.openstreetmap.josm.data.coor.EastNorth.class);
+            Method m = picLayer.getClass().getSuperclass().getDeclaredMethod("getMetersPerNorthing", EastNorth.class);
             m.setAccessible(true);
             r = (double)m.invoke(picLayer, en); 
         }
