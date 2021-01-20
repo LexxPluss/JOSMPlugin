@@ -56,6 +56,7 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.logging.Level;
 
 /**
  * OSM Exporter for o5n format (*.osn).
@@ -89,22 +90,30 @@ public class LexxPlussExporter extends OsmExporter {
                 //System.out.println("PicLayerAbstract");
                 picLayer = (PicLayerAbstract)_layer;
                 image = picLayer.getImage();
-                System.out.println("Image Width=" + image.getWidth(null));
-                System.out.println("Image Height=" + image.getHeight(null));
                 PictureTransform transformer = picLayer.getTransformer();
                 imagePosition = transformer.getImagePosition();
+                transform = transformer.getTransform();
+                /*
+                System.out.println("Image Width=" + image.getWidth(null));
+                System.out.println("Image Height=" + image.getHeight(null));
                 System.out.println("Image North=" + imagePosition.north());
                 System.out.println("Image East=" + imagePosition.east());
-                transform = transformer.getTransform();
                 System.out.println("Transform ScaleX =" + transform.getScaleX());
                 System.out.println("Transform ScaleY =" + transform.getScaleY());
                 System.out.println("Transform TransX =" + transform.getTranslateX());
                 System.out.println("Transform TransY =" + transform.getTranslateY());
                 System.out.println("InitialImageScale =" + getInitialImageScale(picLayer));
+                */
             }
+            /*
             if (_layer instanceof OsmDataLayer) {
-                //System.out.println("OsmDataLayer");
+                System.out.println("OsmDataLayer");
             }
+            */
+        }
+        if (picLayer == null || image == null || transform == null) {
+            JOptionPane.showMessageDialog(MainApplication.getMainFrame(), tr("PicLayer is not existed."));
+            return;
         }
         // 保存するレイヤーのデータセットを取得
         DataSet dataSet = layer.getDataSet();
@@ -114,13 +123,15 @@ public class LexxPlussExporter extends OsmExporter {
         List<Node> nodes = new ArrayList<Node>(dataSet.getNodes());
         double[] srcPts = new double[nodes.size() * 2];
         double[] dstPts = new double[srcPts.length];
+        /*
         for (Node node : nodes) {
-            // 座標変換
+            // 座標表示
             EastNorth pos = node.getEastNorth();
             System.out.println("EastNorth =(" + pos.east() + "," + pos.north() + ")");
             LatLon latlon = node.getCoor();
             System.out.println("LatLon =(" + latlon.lon() + "," + latlon.lat() + ")");
         }
+        */
         int ofs = 0;
         for (Node node : nodes) {
             // 現在のノード情報をバックアップする
@@ -128,27 +139,32 @@ public class LexxPlussExporter extends OsmExporter {
             // 座標変換
             EastNorth pos = node.getEastNorth();
             srcPts[ofs * 2] = pos.east() - imagePosition.east();
-            srcPts[ofs * 2 + 1] = pos.north() - imagePosition.north();
+            srcPts[ofs * 2 + 1] =  - pos.north() + imagePosition.north();
             System.out.println("Src =(" + srcPts[ofs * 2] + "," + srcPts[ofs * 2 + 1] + ")");
             ofs++;
         }
         try {
             transform.inverseTransform(srcPts, 0, dstPts, 0, nodes.size());
-        }
-        catch(java.awt.geom.NoninvertibleTransformException ex) {
-            ex.printStackTrace();
+        } catch (NoninvertibleTransformException e) {
+            Logging.log(Level.WARNING, "Could not inverseTransform.", e);
         }
         ofs = 0;
-        double initialImageScale = getInitialImageScale(picLayer);
-        double hw = image.getWidth(null) / 2.0;
-        double hh = image.getHeight(null) / 2.0;
-        //System.out.println("ImageHafeSize =(" + hw + "," + hh + ")");
-        for (Node node : nodes) {
-            double x = dstPts[ofs * 2]  * 100.0 /  initialImageScale * getMetersPerEasting(picLayer, imagePosition) + hw;
-            double y = -dstPts[ofs * 2 + 1] * 100.0 / initialImageScale * getMetersPerNorthing(picLayer, imagePosition) + hh;
-            System.out.println("Dst =(" + x + "," + y + ")");
-            node.setCoor(new LatLon(x, y));
-            ofs++;
+        try {
+            double initialImageScale = getInitialImageScale(picLayer);
+            double scaleX = 100.0 /  initialImageScale * getMetersPerEasting(picLayer, imagePosition);
+            double scaleY = 100.0 / initialImageScale * getMetersPerNorthing(picLayer, imagePosition);
+            double hw = image.getWidth(null) / 2.0;
+            double hh = image.getHeight(null) / 2.0;
+            for (Node node : nodes) {
+                double x = dstPts[ofs * 2]  * scaleX + hw;
+                double y = dstPts[ofs * 2 + 1] * scaleY + hh;
+                System.out.println("Dst =(" + x + "," + y + ")");
+                node.setCoor(new LatLon(x, y));
+                ofs++;
+            }
+        } catch (Exception e) {
+            Logging.log(Level.WARNING, "Could not transform.", e);
+            return;
         }
 
         dataSet.unlock();
@@ -171,11 +187,8 @@ public class LexxPlussExporter extends OsmExporter {
             f.setAccessible(true);
             r = (double)f.get(picLayer);
         }
-        catch (NoSuchFieldException nsfe) {
-            nsfe.printStackTrace();
-        }
-        catch (IllegalAccessException iae) {
-            iae.printStackTrace();
+        catch (NoSuchFieldException | IllegalAccessException e) {
+            Logging.log(Level.WARNING, "Could not get PicLayerAbstract.initialImageScale.", e);
         }
         return r;
     }
@@ -184,19 +197,12 @@ public class LexxPlussExporter extends OsmExporter {
         double r = Double.NaN;
         try {
             // PicLayerAbstractは抽象クラスなので子クラスから親クラスを参照する
-            //Method m = picLayer.getClass().getSuperclass().getDeclaredMethod("getMetersPerEasting", org.openstreetmap.josm.data.coor.EastNorth.class);
             Method m = picLayer.getClass().getSuperclass().getDeclaredMethod("getMetersPerEasting", EastNorth.class);
             m.setAccessible(true);
             r = (double)m.invoke(picLayer, en); 
         }
-        catch (NoSuchMethodException nsme) {
-            nsme.printStackTrace();
-        }
-        catch (InvocationTargetException ite) {
-            ite.printStackTrace();
-        }
-        catch (IllegalAccessException iae) {
-            iae.printStackTrace();
+        catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            Logging.log(Level.WARNING, "Could not invoke PicLayerAbstract.getMetersPerEasting.", e);
         }
         return r;
     }
@@ -205,19 +211,12 @@ public class LexxPlussExporter extends OsmExporter {
         double r = Double.NaN;
         try {
             // PicLayerAbstractは抽象クラスなので子クラスから親クラスを参照する
-            //Method m = picLayer.getClass().getSuperclass().getDeclaredMethod("getMetersPerNorthing", org.openstreetmap.josm.data.coor.EastNorth.class);
             Method m = picLayer.getClass().getSuperclass().getDeclaredMethod("getMetersPerNorthing", EastNorth.class);
             m.setAccessible(true);
             r = (double)m.invoke(picLayer, en); 
         }
-        catch (NoSuchMethodException nsme) {
-            nsme.printStackTrace();
-        }
-        catch (InvocationTargetException ite) {
-            ite.printStackTrace();
-        }
-        catch (IllegalAccessException iae) {
-            iae.printStackTrace();
+        catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            Logging.log(Level.WARNING, "Could not invoke PicLayerAbstract.getMetersPerNorthing.", e);
         }
         return r;
     }
