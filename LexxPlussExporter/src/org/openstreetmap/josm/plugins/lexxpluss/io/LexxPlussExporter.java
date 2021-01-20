@@ -81,19 +81,19 @@ public class LexxPlussExporter extends OsmExporter {
         EastNorth imagePosition = null;
         PicLayerAbstract picLayer = null;
         List<Layer> layers = MainApplication.getLayerManager().getVisibleLayersInZOrder();
-        System.out.println("layers Count=" + layers.size());
+        //System.out.println("layers Count=" + layers.size());
         for(Layer _layer : layers) {
-            System.out.println("layers Name=" + _layer.getName());
-            System.out.println("Class Name=" + _layer.getClass().getName());
+            //System.out.println("layers Name=" + _layer.getName());
+            //System.out.println("Class Name=" + _layer.getClass().getName());
             if (_layer instanceof PicLayerAbstract) {
-                System.out.println("PicLayerAbstract");
+                //System.out.println("PicLayerAbstract");
                 picLayer = (PicLayerAbstract)_layer;
                 image = picLayer.getImage();
                 System.out.println("Image Width=" + image.getWidth(null));
                 System.out.println("Image Height=" + image.getHeight(null));
                 PictureTransform transformer = picLayer.getTransformer();
                 imagePosition = transformer.getImagePosition();
-                System.out.println("継承Image North=" + imagePosition.north());
+                System.out.println("Image North=" + imagePosition.north());
                 System.out.println("Image East=" + imagePosition.east());
                 transform = transformer.getTransform();
                 System.out.println("Transform ScaleX =" + transform.getScaleX());
@@ -103,27 +103,33 @@ public class LexxPlussExporter extends OsmExporter {
                 System.out.println("InitialImageScale =" + getInitialImageScale(picLayer));
             }
             if (_layer instanceof OsmDataLayer) {
-                System.out.println("OsmDataLayer");
+                //System.out.println("OsmDataLayer");
             }
         }
         // 保存するレイヤーのデータセットを取得
         DataSet dataSet = layer.getDataSet();
-        System.out.println("dataSet Count=" + dataSet.getNodes().size());
+        //System.out.println("dataSet Count=" + dataSet.getNodes().size());
         dataSet.lock();
         List<Node> backup = new ArrayList<Node>();
         List<Node> nodes = new ArrayList<Node>(dataSet.getNodes());
         double[] srcPts = new double[nodes.size() * 2];
         double[] dstPts = new double[srcPts.length]; 
+        for (Node node : nodes) {
+            // 座標変換
+            EastNorth pos = node.getEastNorth();
+            System.out.println("EastNorth =(" + pos.east() + "," + pos.north() + ")");
+            LatLon latlon = node.getCoor();
+            System.out.println("LatLon =(" + latlon.lon() + "," + latlon.lat() + ")");
+        }
         int ofs = 0;
         for (Node node : nodes) {
-            // 現在のノード情報をバックアップする\\
+            // 現在のノード情報をバックアップする
             backup.add(new Node(node));
             // 座標変換
             EastNorth pos = node.getEastNorth();
-            pos = pos.subtract(imagePosition);
-            System.out.println("Src =(" + pos.east() + "," + pos.north() + ")");
-            srcPts[ofs * 2] = pos.east();
-            srcPts[ofs * 2 + 1] = pos.north();
+            srcPts[ofs * 2] = pos.east() - imagePosition.east();
+            srcPts[ofs * 2 + 1] = pos.north() - imagePosition.north();
+            System.out.println("Src =(" + srcPts[ofs * 2] + "," + srcPts[ofs * 2 + 1] + ")");
             ofs++;
         }
         try {
@@ -136,11 +142,17 @@ public class LexxPlussExporter extends OsmExporter {
         double initialImageScale = getInitialImageScale(picLayer);
         double hw = image.getWidth(null) / 2.0;
         double hh = image.getHeight(null) / 2.0;
+        //System.out.println("ImageHafeSize =(" + hw + "," + hh + ")");
         for (Node node : nodes) {
-            double x = dstPts[ofs * 2] * initialImageScale / 100.0 + hw;
-            double y = dstPts[ofs * 2 + 1] * initialImageScale / 100.0 + hh;
+            //System.out.println("DstPts =(" + dstPts[ofs * 2] + "," + dstPts[ofs * 2 + 1] + ")");
+            //double x = dstPts[ofs * 2]  * 100.0 /  initialImageScale / 2.0837706894099863 * 0.8214007020307434 + hw;
+            //double y = dstPts[ofs * 2 + 1] * 100.0 / initialImageScale / 2.0837706894099863 * 0.8214007118841223 + hh;
+            //double x = dstPts[ofs * 2]  * 100.0 /  initialImageScale * 0.8214007020307434 + hw;
+            //double y = dstPts[ofs * 2 + 1] * 100.0 / initialImageScale * 0.8214007118841223 + hh;
+            double x = dstPts[ofs * 2]  * 100.0 /  initialImageScale * getMetersPerEasting(picLayer, imagePosition) + hw;
+            double y = dstPts[ofs * 2 + 1] * 100.0 / initialImageScale * getMetersPerNorthing(picLayer, imagePosition) + hh;
             System.out.println("Dst =(" + x + "," + y + ")");
-            node.setEastNorth(new EastNorth(x, y));
+            node.setCoor(new LatLon(x, y));
             ofs++;
         }
 
@@ -177,7 +189,7 @@ public class LexxPlussExporter extends OsmExporter {
         double r = 0.0;
         try {
             // PicLayerAbstractは抽象クラスなので子クラスから親クラスを参照する
-            Method m = picLayer.getClass().getSuperclass().getMethod("getMetersPerEasting");
+            Method m = picLayer.getClass().getSuperclass().getDeclaredMethod("getMetersPerEasting", org.openstreetmap.josm.data.coor.EastNorth.class);
             m.setAccessible(true);
             r = (double)m.invoke(picLayer, en); 
         }
@@ -197,7 +209,7 @@ public class LexxPlussExporter extends OsmExporter {
         double r = 0.0;
         try {
             // PicLayerAbstractは抽象クラスなので子クラスから親クラスを参照する
-            Method m = picLayer.getClass().getSuperclass().getMethod("getMetersPerNorthing");
+            Method m = picLayer.getClass().getSuperclass().getDeclaredMethod("getMetersPerNorthing", org.openstreetmap.josm.data.coor.EastNorth.class);
             m.setAccessible(true);
             r = (double)m.invoke(picLayer, en); 
         }
