@@ -3,60 +3,32 @@ package org.openstreetmap.josm.plugins.lexxpluss.io;
 
 import static org.openstreetmap.josm.tools.I18n.tr;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.openstreetmap.josm.actions.ExtensionFileFilter;
-import org.openstreetmap.josm.data.osm.DataSet;
-import org.openstreetmap.josm.gui.io.importexport.OsmExporter;
-import org.openstreetmap.josm.gui.progress.NullProgressMonitor;
-import org.openstreetmap.josm.gui.progress.ProgressMonitor;
-import org.openstreetmap.josm.io.IllegalDataException;
-import org.openstreetmap.josm.io.CachedFile;
-
 import java.awt.Image;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.AccessDeniedException;
-import java.nio.file.InvalidPathException;
-import java.text.MessageFormat;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
 
 import javax.swing.JOptionPane;
 
 import org.openstreetmap.josm.actions.ExtensionFileFilter;
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.coor.LatLon;
+import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.gui.io.importexport.OsmExporter;
 import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
-import org.openstreetmap.josm.io.Compression;
-import org.openstreetmap.josm.io.OsmWriter;
-import org.openstreetmap.josm.io.OsmWriterFactory;
-import org.openstreetmap.josm.plugins.lexxpluss.LexxPlussUtil;
-import org.openstreetmap.josm.spi.preferences.Config;
-import org.openstreetmap.josm.tools.Logging;
-import org.openstreetmap.josm.tools.Utils;
-import org.openstreetmap.josm.plugins.piclayer.actions.transform.autocalibrate.helper.GeoLine;
-import org.openstreetmap.josm.plugins.piclayer.transform.PictureTransform;
-
-
 import org.openstreetmap.josm.plugins.piclayer.layer.PicLayerAbstract;
-import java.awt.geom.NoninvertibleTransformException;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.logging.Level;
+import org.openstreetmap.josm.plugins.piclayer.transform.PictureTransform;
+import org.openstreetmap.josm.tools.Logging;
 
 /**
  * OSM Exporter for o5n format (*.osn).
@@ -81,6 +53,7 @@ public class LexxPlussExporter extends OsmExporter {
         AffineTransform transform = null;
         EastNorth imagePosition = null;
         PicLayerAbstract picLayer = null;
+        // PicLayerを検索し、情報を取得
         List<Layer> layers = MainApplication.getLayerManager().getVisibleLayersInZOrder();
         //System.out.println("layers Count=" + layers.size());
         for(Layer _layer : layers) {
@@ -112,6 +85,7 @@ public class LexxPlussExporter extends OsmExporter {
             */
         }
         if (picLayer == null || image == null || transform == null) {
+            // PicLayerが見つからない場合はエラー
             JOptionPane.showMessageDialog(MainApplication.getMainFrame(), tr("PicLayer is not existed."));
             return;
         }
@@ -132,22 +106,26 @@ public class LexxPlussExporter extends OsmExporter {
             System.out.println("LatLon =(" + latlon.lon() + "," + latlon.lat() + ")");
         }
         */
+        // 座標変換準備
         int ofs = 0;
         for (Node node : nodes) {
             // 現在のノード情報をバックアップする
             backup.add(new Node(node));
-            // 座標変換
             EastNorth pos = node.getEastNorth();
             srcPts[ofs * 2] = pos.east() - imagePosition.east();
+            // 画像座標系と地図座標系ではY軸の方向が逆
             srcPts[ofs * 2 + 1] =  - pos.north() + imagePosition.north();
             System.out.println("Src =(" + srcPts[ofs * 2] + "," + srcPts[ofs * 2 + 1] + ")");
             ofs++;
         }
+        // アフィン行列逆変換 
         try {
             transform.inverseTransform(srcPts, 0, dstPts, 0, nodes.size());
         } catch (NoninvertibleTransformException e) {
             Logging.log(Level.WARNING, "Could not inverseTransform.", e);
+            return;
         }
+        // スケール調整
         ofs = 0;
         try {
             double initialImageScale = getInitialImageScale(picLayer);
@@ -159,11 +137,12 @@ public class LexxPlussExporter extends OsmExporter {
                 double x = dstPts[ofs * 2]  * scaleX + hw;
                 double y = dstPts[ofs * 2 + 1] * scaleY + hh;
                 System.out.println("Dst =(" + x + "," + y + ")");
+                // 変換した座標をノードに再セット
                 node.setCoor(new LatLon(x, y));
                 ofs++;
             }
         } catch (Exception e) {
-            Logging.log(Level.WARNING, "Could not transform.", e);
+            Logging.log(Level.WARNING, "Could not rescaling.", e);
             return;
         }
 
@@ -179,10 +158,16 @@ public class LexxPlussExporter extends OsmExporter {
         dataSet.unlock();
     }
 
+    /**
+     * get PicLayerAbstract.initialImageScale
+     * @param picLayer PicLayerAbstract instance
+     * @return PicLayerAbstract.initialImageScale
+     */
     private double getInitialImageScale(PicLayerAbstract picLayer) {
         double r = Double.NaN;
         try {
-            // PicLayerAbstractは抽象クラスなので子クラスから親クラスを参照する
+            // PicLayerAbstractは抽象クラスなのでpicLayerの実態は必ず継承クラスになる。
+            // リファクタリングには継承クラスから親クラスのPicLayerAbstractを参照する
             Field f = picLayer.getClass().getSuperclass().getDeclaredField("initialImageScale");
             f.setAccessible(true);
             r = (double)f.get(picLayer);
@@ -193,10 +178,18 @@ public class LexxPlussExporter extends OsmExporter {
         return r;
     }
 
+    /**
+     * get MetersPerEasting
+     * @param picLayer PicLayerAbstract instance
+     * @param en imagePosition
+     * @return MetersPerEasting
+     */
     private double getMetersPerEasting(PicLayerAbstract picLayer, EastNorth en) {
         double r = Double.NaN;
         try {
-            // PicLayerAbstractは抽象クラスなので子クラスから親クラスを参照する
+            // PicLayerAbstractは抽象クラスなのでpicLayerの実態は必ず継承クラスになる。
+            // リファクタリングには継承クラスから親クラスのPicLayerAbstractを参照する
+            // 引数の型は必ず指定する
             Method m = picLayer.getClass().getSuperclass().getDeclaredMethod("getMetersPerEasting", EastNorth.class);
             m.setAccessible(true);
             r = (double)m.invoke(picLayer, en); 
@@ -207,10 +200,18 @@ public class LexxPlussExporter extends OsmExporter {
         return r;
     }
 
+    /**
+     * get MetersPerNorthing
+     * @param picLayer PicLayerAbstract instance
+     * @param en imagePosition
+     * @return MetersPerNorthing
+     */
     private double getMetersPerNorthing(PicLayerAbstract picLayer, EastNorth en) {
         double r = Double.NaN;
         try {
-            // PicLayerAbstractは抽象クラスなので子クラスから親クラスを参照する
+            // PicLayerAbstractは抽象クラスなのでpicLayerの実態は必ず継承クラスになる。
+            // リファクタリングには継承クラスから親クラスのPicLayerAbstractを参照する
+            // 引数の型は必ず指定する
             Method m = picLayer.getClass().getSuperclass().getDeclaredMethod("getMetersPerNorthing", EastNorth.class);
             m.setAccessible(true);
             r = (double)m.invoke(picLayer, en); 
