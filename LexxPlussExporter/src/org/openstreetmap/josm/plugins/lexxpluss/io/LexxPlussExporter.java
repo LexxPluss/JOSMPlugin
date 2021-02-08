@@ -6,6 +6,7 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 import java.awt.Image;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -26,6 +27,8 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.io.importexport.OsmExporter;
 import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
+import org.openstreetmap.josm.gui.MapFrame;
+import org.openstreetmap.josm.gui.MapView;
 import org.openstreetmap.josm.plugins.piclayer.layer.PicLayerAbstract;
 import org.openstreetmap.josm.plugins.piclayer.transform.PictureTransform;
 import org.openstreetmap.josm.tools.Logging;
@@ -50,23 +53,37 @@ public class LexxPlussExporter extends OsmExporter {
     protected void doSave(File file, OsmDataLayer layer) throws IOException {
 
         Image image = null;
-        AffineTransform transform = null;
-        EastNorth imagePosition = null;
+        AffineTransform transform = null;   // 画像の表示位置変換アフィン行列
+        EastNorth imagePosition = null;     // en単位での画像中央位置
         PicLayerAbstract picLayer = null;
         // PicLayerを検索し、情報を取得
         List<Layer> layers = MainApplication.getLayerManager().getVisibleLayersInZOrder();
-        //System.out.println("layers Count=" + layers.size());
+        // System.out.println("layers Count=" + layers.size());
+        final MapFrame mf = MainApplication.getMap();
+        MapView mv = mf.mapView;
+        EastNorth center = mv.getCenter();
+        EastNorth leftop = mv.getEastNorth(0, 0);
+        double pixel_per_en = (mv.getWidth() / 2.0) / (center.east() - leftop.east());  // 1en当たりのピクセル数
+        double pic_offset_x = 0, pic_offset_y = 0;  // ピクセル単位の画像中央位置
+        // This is now the offset in screen pixels
         for(Layer _layer : layers) {
-            //System.out.println("layers Name=" + _layer.getName());
-            //System.out.println("Class Name=" + _layer.getClass().getName());
+            // System.out.println("layers Name=" + _layer.getName());
+            // System.out.println("Class Name=" + _layer.getClass().getName());
             if (_layer instanceof PicLayerAbstract) {
-                //System.out.println("PicLayerAbstract");
+                // System.out.println("PicLayerAbstract");
                 picLayer = (PicLayerAbstract)_layer;
                 image = picLayer.getImage();
                 PictureTransform transformer = picLayer.getTransformer();
                 imagePosition = transformer.getImagePosition();
                 transform = transformer.getTransform();
+                pic_offset_x = ((imagePosition.east() - center.east()) * pixel_per_en);
+                pic_offset_y = ((center.north() - imagePosition.north()) * pixel_per_en);
                 /*
+                System.out.println("pixel_per_en=" + pixel_per_en);
+                System.out.println("center North=" + center.north());
+                System.out.println("center East=" + center.east());
+                System.out.println("picture offset x=" + pic_offset_x);
+                System.out.println("picture offset y=" + pic_offset_y);
                 System.out.println("Image Width=" + image.getWidth(null));
                 System.out.println("Image Height=" + image.getHeight(null));
                 System.out.println("Image North=" + imagePosition.north());
@@ -91,35 +108,42 @@ public class LexxPlussExporter extends OsmExporter {
         }
         // 保存するレイヤーのデータセットを取得
         DataSet dataSet = layer.getDataSet();
-        //System.out.println("dataSet Count=" + dataSet.getNodes().size());
+        // System.out.println("dataSet Count=" + dataSet.getNodes().size());
         dataSet.lock();
         List<Node> backup = new ArrayList<Node>();
         List<Node> nodes = new ArrayList<Node>(dataSet.getNodes());
         double[] srcPts = new double[nodes.size() * 2];
         double[] dstPts = new double[srcPts.length];
-        /*
-        for (Node node : nodes) {
-            // 座標表示
-            EastNorth pos = node.getEastNorth();
-            System.out.println("EastNorth =(" + pos.east() + "," + pos.north() + ")");
-            LatLon latlon = node.getCoor();
-            System.out.println("LatLon =(" + latlon.lon() + "," + latlon.lat() + ")");
-        }
-        */
         // 座標変換準備
         int ofs = 0;
+        double initialImageScale = getInitialImageScale(picLayer);
         for (Node node : nodes) {
             // 現在のノード情報をバックアップする
             backup.add(new Node(node));
             EastNorth pos = node.getEastNorth();
-            srcPts[ofs * 2] = pos.east() - imagePosition.east();
+            srcPts[ofs * 2] = (pos.east() - center.east()) * pixel_per_en;
             // 画像座標系と地図座標系ではY軸の方向が逆
-            srcPts[ofs * 2 + 1] =  - pos.north() + imagePosition.north();
-            System.out.println("Src =(" + srcPts[ofs * 2] + "," + srcPts[ofs * 2 + 1] + ")");
+            srcPts[ofs * 2 + 1] =  (center.north() - pos.north()) * pixel_per_en;
+            // srcPts[ofs * 2] = ((pos.east() - center.east()) * (mv.getWidth() / 2.0)) / (center.east() - leftop.east());
+            // srcPts[ofs * 2 + 1] =  ((center.north() - pos.north()) * (mv.getWidth() / 2.0)) / (center.east() - leftop.east());
+            //System.out.println("Src =(" + srcPts[ofs * 2] + "," + srcPts[ofs * 2 + 1] + ")");
             ofs++;
         }
         // アフィン行列逆変換 
         try {
+            double[] matrix = new double[6];
+            transform.getMatrix(matrix);
+            matrix[4] = 0.0;    // アフィン行列内の平行移動要素を消去
+            matrix[5] = 0.0;
+            transform = new AffineTransform(matrix);
+            /*
+            System.out.println("Transform ScaleX =" + transform.getScaleX());
+            System.out.println("Transform ScaleY =" + transform.getScaleY());
+            System.out.println("Transform TransX =" + transform.getTranslateX());
+            System.out.println("Transform TransY =" + transform.getTranslateY());
+            System.out.println("Transform ShearX =" + transform.getShearX());
+            System.out.println("Transform ShearY =" + transform.getShearY());
+            */
             transform.inverseTransform(srcPts, 0, dstPts, 0, nodes.size());
         } catch (NoninvertibleTransformException e) {
             Logging.log(Level.WARNING, "Could not inverseTransform.", e);
@@ -128,15 +152,30 @@ public class LexxPlussExporter extends OsmExporter {
         // スケール調整
         ofs = 0;
         try {
-            double initialImageScale = getInitialImageScale(picLayer);
-            double scaleX = 100.0 /  initialImageScale * getMetersPerEasting(picLayer, imagePosition);
-            double scaleY = 100.0 / initialImageScale * getMetersPerNorthing(picLayer, imagePosition);
+            // System.out.println("getMetersPerEasting=" + getMetersPerEasting(picLayer, imagePosition));
+            // System.out.println("getMetersPerNorthing=" + getMetersPerNorthing(picLayer, imagePosition));
+            // 画像半縦幅、半横幅
             double hw = image.getWidth(null) / 2.0;
             double hh = image.getHeight(null) / 2.0;
+            // スケール補正値
+            double scaleX = (100.0 * getMetersPerEasting(picLayer, imagePosition)) / (initialImageScale * pixel_per_en);
+            double scaleY = (100.0 * getMetersPerNorthing(picLayer, imagePosition)) / (initialImageScale * pixel_per_en);
+            // System.out.println("scaleX=" + scaleX);
+            // System.out.println("scaleY=" + scaleY);
             for (Node node : nodes) {
-                double x = dstPts[ofs * 2]  * scaleX + hw;
-                double y = dstPts[ofs * 2 + 1] * scaleY + hh;
-                System.out.println("Dst =(" + x + "," + y + ")");
+                double x = dstPts[ofs * 2];
+                double y = dstPts[ofs * 2 + 1];
+                // System.out.println("Dst1 =(" + x + "," + y + ")");
+                // node.setEastNorth(new EastNorth(x, y));
+                x -= pic_offset_x;
+                y -= pic_offset_y;
+                // System.out.println("Dst2 =(" + x + "," + y + ")");
+                x *= scaleX;
+                y *= scaleY;
+                // System.out.println("Dst3 =(" + x + "," + y + ")");
+                x += hw;
+                y += hh;
+                //System.out.println("Dst4 =(" + x + "," + y + ")");
                 // 変換した座標をノードに再セット
                 node.setCoor(new LatLon(x, y));
                 ofs++;
