@@ -108,9 +108,9 @@ public class LexxPlussExporter extends OsmExporter {
         }
         // 保存するレイヤーのデータセットを取得
         DataSet dataSet = layer.getDataSet();
-        // System.out.println("dataSet Count=" + dataSet.getNodes().size());
-        dataSet.lock();
-        List<Node> backup = new ArrayList<Node>();
+        //System.out.println("dataSet Count=" + dataSet.getNodes().size());
+        //dataSet.lock();
+        dataSet.beginUpdate();
         List<Node> nodes = new ArrayList<Node>(dataSet.getNodes());
         double[] srcPts = new double[nodes.size() * 2];
         double[] dstPts = new double[srcPts.length];
@@ -118,8 +118,6 @@ public class LexxPlussExporter extends OsmExporter {
         int ofs = 0;
         double initialImageScale = getInitialImageScale(picLayer);
         for (Node node : nodes) {
-            // 現在のノード情報をバックアップする
-            backup.add(new Node(node));
             EastNorth pos = node.getEastNorth();
             srcPts[ofs * 2] = (pos.east() - center.east()) * pixel_per_en;
             // 画像座標系と地図座標系ではY軸の方向が逆
@@ -176,25 +174,22 @@ public class LexxPlussExporter extends OsmExporter {
                 x += hw;
                 y += hh;
                 //System.out.println("Dst4 =(" + x + "," + y + ")");
-                // 変換した座標をノードに再セット
-                node.setCoor(new LatLon(x, y));
-                ofs++;
+                // 変換した座標をタグにセット
+                System.out.println("Update Keys=" + node.getNumKeys());
+                node.put("X", String.valueOf(x));
+                node.put("Y", String.valueOf(y));
+                System.out.println("Node Keys=" + node.getNumKeys());
+            ofs++;
             }
         } catch (Exception e) {
             Logging.log(Level.WARNING, "Could not rescaling.", e);
             return;
         }
 
-        dataSet.unlock();
+        dataSet.endUpdate();
+        //dataSet.unlock();
         // 基底クラスのファイル保存メソッドを実行する
         super.doSave(file, layer);
-
-        // 元のノード情報をバックアップから復元する
-        dataSet.lock();
-        for (int i = 0; i < nodes.size(); i++) {
-            nodes.get(i).setCoor(backup.get(i).getCoor());
-        }
-        dataSet.unlock();
     }
 
     /**
