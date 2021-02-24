@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<project name="lexxpluss" default="dist" basedir=".">
+<project name="lexxpluss" default="dist" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
 
     <!-- enter the SVN commit message -->
     <property name="commit.message" value="Commit message"/>
@@ -18,9 +18,12 @@
     <!--<property name="plugin.early" value="..."/>-->
     <!--<property name="plugin.requires" value="..."/>-->
     <!--<property name="plugin.stage" value="..."/>-->
-
+    <property name="plugin.requires" value="PicLayer"/>
     <!-- ** include targets that all plugins have in common ** -->
     <import file="../build-common.xml"/>
+	<fileset id="plugin.requires.jars" dir="${plugin.dist.dir}">
+        <include name="PicLayer.jar"/>
+    </fileset>
     <!--
     **********************************************************
     ** compile - complies the source tree
