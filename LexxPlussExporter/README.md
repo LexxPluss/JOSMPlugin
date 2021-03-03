@@ -28,7 +28,9 @@ Ubunti18.04環境での一例
 $ cd ~
 $ git clone git@github.com:LexxPluss/JOSMPlugin.git
 $ mv ~/JOSMPlugin/LexxPlussExporter ~/workspace/josm/plugins
-$ cd ~/workspace/josm/plugins/
+$ cd ~/workspace/josm/plugins/PicLayer
+$ ant # PicLayerがビルド済みでPicLayer.jarができている必要がある
+$ cd ~/workspace/josm/plugins/LexxPlussExporter
 $ ant install
 ```
 
