@@ -42,7 +42,7 @@ public class LexxPlussExporter extends OsmExporter {
     /**
      * File extension.
      */
-    private static final String EXTENSION = "osn";
+    private static final String EXTENSION = "osm";
     
     public LexxPlussExporter() {
         super(new ExtensionFileFilter(EXTENSION, EXTENSION, 
@@ -102,8 +102,10 @@ public class LexxPlussExporter extends OsmExporter {
             */
         }
         if (picLayer == null || image == null || transform == null) {
+            // 通常のOSM保存処理を実行させる
+            super.doSave(file, layer);
             // PicLayerが見つからない場合はエラー
-            JOptionPane.showMessageDialog(MainApplication.getMainFrame(), tr("PicLayer is not existed."));
+            //JOptionPane.showMessageDialog(MainApplication.getMainFrame(), tr("PicLayer is not existed."));
             return;
         }
         // 保存するレイヤーのデータセットを取得
@@ -145,6 +147,8 @@ public class LexxPlussExporter extends OsmExporter {
             transform.inverseTransform(srcPts, 0, dstPts, 0, nodes.size());
         } catch (NoninvertibleTransformException e) {
             Logging.log(Level.WARNING, "Could not inverseTransform.", e);
+            // 通常のOSM保存処理を実行させる
+            super.doSave(file, layer);
             return;
         }
         // スケール調整
@@ -171,18 +175,20 @@ public class LexxPlussExporter extends OsmExporter {
                 x *= scaleX;
                 y *= scaleY;
                 // System.out.println("Dst3 =(" + x + "," + y + ")");
-                x += hw;
-                y += hh;
+                x = hw + x;
+                y = hh + y;
                 //System.out.println("Dst4 =(" + x + "," + y + ")");
                 // 変換した座標をタグにセット
-                System.out.println("Update Keys=" + node.getNumKeys());
+                // System.out.println("Update Keys=" + node.getNumKeys());
                 node.put("X", String.valueOf(x));
                 node.put("Y", String.valueOf(y));
-                System.out.println("Node Keys=" + node.getNumKeys());
+                // System.out.println("Node Keys=" + node.getNumKeys());
             ofs++;
             }
         } catch (Exception e) {
             Logging.log(Level.WARNING, "Could not rescaling.", e);
+            // 通常のOSM保存処理を実行させる
+            super.doSave(file, layer);
             return;
         }
 
