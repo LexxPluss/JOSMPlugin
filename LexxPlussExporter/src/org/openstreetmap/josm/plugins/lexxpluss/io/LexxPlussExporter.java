@@ -63,7 +63,10 @@ public class LexxPlussExporter extends OsmExporter {
         MapView mv = mf.mapView;
         EastNorth center = mv.getCenter();
         EastNorth leftop = mv.getEastNorth(0, 0);
-        double pixel_per_en = (mv.getWidth() / 2.0) / (center.east() - leftop.east());  // 1en当たりのピクセル数
+        double pixel_per_en_x = (mv.getWidth() / 2.0) / (center.east() - leftop.east());  // 1en当たりのピクセル数
+        //System.out.println("pixel_per_en_x=" + pixel_per_en_x);
+        double pixel_per_en_y = (mv.getHeight() / 2.0) / (leftop.north() - center.north());  // 1en当たりのピクセル数
+        //System.out.println("pixel_per_en_y=" + pixel_per_en_y);
         double pic_offset_x = 0, pic_offset_y = 0;  // ピクセル単位の画像中央位置
         // This is now the offset in screen pixels
         for(Layer _layer : layers) {
@@ -74,10 +77,10 @@ public class LexxPlussExporter extends OsmExporter {
                 picLayer = (PicLayerAbstract)_layer;
                 image = picLayer.getImage();
                 PictureTransform transformer = picLayer.getTransformer();
+                transform = transformer.getTransform(); 
                 imagePosition = transformer.getImagePosition();
-                transform = transformer.getTransform();
-                pic_offset_x = ((imagePosition.east() - center.east()) * pixel_per_en);
-                pic_offset_y = ((center.north() - imagePosition.north()) * pixel_per_en);
+                pic_offset_x = ((imagePosition.east() - center.east()) * pixel_per_en_x);
+                pic_offset_y = ((center.north() - imagePosition.north()) * pixel_per_en_y);
                 /*
                 System.out.println("pixel_per_en=" + pixel_per_en);
                 System.out.println("center North=" + center.north());
@@ -121,9 +124,9 @@ public class LexxPlussExporter extends OsmExporter {
         double initialImageScale = getInitialImageScale(picLayer);
         for (Node node : nodes) {
             EastNorth pos = node.getEastNorth();
-            srcPts[ofs * 2] = (pos.east() - center.east()) * pixel_per_en;
+            srcPts[ofs * 2] = (pos.east() - center.east()) * pixel_per_en_x;
             // 画像座標系と地図座標系ではY軸の方向が逆
-            srcPts[ofs * 2 + 1] =  (center.north() - pos.north()) * pixel_per_en;
+            srcPts[ofs * 2 + 1] =  (center.north() - pos.north()) * pixel_per_en_y;
             // srcPts[ofs * 2] = ((pos.east() - center.east()) * (mv.getWidth() / 2.0)) / (center.east() - leftop.east());
             // srcPts[ofs * 2 + 1] =  ((center.north() - pos.north()) * (mv.getWidth() / 2.0)) / (center.east() - leftop.east());
             //System.out.println("Src =(" + srcPts[ofs * 2] + "," + srcPts[ofs * 2 + 1] + ")");
@@ -160,8 +163,8 @@ public class LexxPlussExporter extends OsmExporter {
             double hw = image.getWidth(null) / 2.0;
             double hh = image.getHeight(null) / 2.0;
             // スケール補正値
-            double scaleX = (100.0 * getMetersPerEasting(picLayer, imagePosition)) / (initialImageScale * pixel_per_en);
-            double scaleY = (100.0 * getMetersPerNorthing(picLayer, imagePosition)) / (initialImageScale * pixel_per_en);
+            double scaleX = (100.0 * getMetersPerEasting(picLayer, imagePosition)) / (initialImageScale * pixel_per_en_x);
+            double scaleY = (100.0 * getMetersPerNorthing(picLayer, imagePosition)) / (initialImageScale * pixel_per_en_y);
             // System.out.println("scaleX=" + scaleX);
             // System.out.println("scaleY=" + scaleY);
             for (Node node : nodes) {
@@ -169,8 +172,8 @@ public class LexxPlussExporter extends OsmExporter {
                 double y = dstPts[ofs * 2 + 1];
                 // System.out.println("Dst1 =(" + x + "," + y + ")");
                 // node.setEastNorth(new EastNorth(x, y));
-                x -= pic_offset_x;
-                y -= pic_offset_y;
+                x -= pic_offset_x / transform.getScaleX();
+                y -= pic_offset_y / transform.getScaleY();
                 // System.out.println("Dst2 =(" + x + "," + y + ")");
                 x *= scaleX;
                 y *= scaleY;
