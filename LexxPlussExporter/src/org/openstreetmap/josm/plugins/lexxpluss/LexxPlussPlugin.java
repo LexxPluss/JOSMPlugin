@@ -16,6 +16,6 @@ public class LexxPlussPlugin extends Plugin {
 
     public LexxPlussPlugin(PluginInformation info) {
         super(info);
-        ExtensionFileFilter.addExporter(new LexxPlussExporter());
+        ExtensionFileFilter.addExporterFirst(new LexxPlussExporter());
     }
 }
