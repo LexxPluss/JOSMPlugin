@@ -4,11 +4,11 @@
 
 ####  インストール方法
 
-1. 提供されるlexxpluss.jarファイルを~/.josm/pluginsにコピーする。
-2. JOSMを起動し、プラグイン設定で有効化して再起動する。
-
-本プラグインの動作には画像をレイヤーとして使用するためのPicLayerプラグインが必須である。
-未インストールの場合は予めインストールして有効化しておくこと。
+1. [JOSMのインストール](https://josm.openstreetmap.de/wiki/Ja:Download)
+2. PicLayerプラグインのインストール( 本プラグインの動作には画像をレイヤーとして使用するためのPicLayerプラグインが必須である。 )
+  - JOSMを開いてメニューからPresets/Preferences/PluginsのSearchに"PicLayer"と検索してinstall.これで，画像ファイルを挿入できるようになる．
+3. 提供されるlexxpluss.jarファイルを~/.josm/pluginsにコピーする。
+4. JOSMを起動し、プラグイン設定で有効化して再起動する。
 
 #### 使用方法
 1. PicLayerによる画像レイヤーを一つ用意する。複数存在する場合は一番優先度の高いレイヤーが対象になる。
