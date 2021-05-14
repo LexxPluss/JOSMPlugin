@@ -183,8 +183,8 @@ public class LexxPlussExporter extends OsmExporter {
                 //System.out.println("Dst4 =(" + x + "," + y + ")");
                 // 変換した座標をタグにセット
                 // System.out.println("Update Keys=" + node.getNumKeys());
-                node.put("X", String.valueOf(x));
-                node.put("Y", String.valueOf(y));
+                node.put("X_image", String.valueOf(x));
+                node.put("Y_image", String.valueOf(y));
                 // System.out.println("Node Keys=" + node.getNumKeys());
             ofs++;
             }
