@@ -197,8 +197,10 @@ public class LexxPlussReader extends OsmReader {
     }
 	
 	/*
-	 * above From here, redefine super class functions due to private classes
+	 * Below From here, redefine super class functions due to private classes
 	 * but, these are completely same as super
+	 * ここから下は、継承元のクラスの関数がprivateでアクセスできなかったために、
+	 * 関数をそのままコピーしているだけで、特に変更は加えていない。
 	 * */
     private static final Set<String> COMMON_XML_ATTRIBUTES = new TreeSet<>();
 
