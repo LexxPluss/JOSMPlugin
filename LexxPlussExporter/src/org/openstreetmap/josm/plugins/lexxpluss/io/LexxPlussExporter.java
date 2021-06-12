@@ -6,7 +6,6 @@ import static org.openstreetmap.josm.tools.I18n.tr;
 import java.awt.Image;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
-import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -16,13 +15,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
-import javax.swing.JOptionPane;
 
 import org.openstreetmap.josm.actions.ExtensionFileFilter;
 import org.openstreetmap.josm.data.coor.EastNorth;
-import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
+import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.data.osm.Tag;
+import org.openstreetmap.josm.data.osm.TagMap;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.io.importexport.OsmExporter;
 import org.openstreetmap.josm.gui.layer.Layer;
@@ -52,6 +52,10 @@ public class LexxPlussExporter extends OsmExporter {
     @Override
     protected void doSave(File file, OsmDataLayer layer) throws IOException {
 
+        // record info in this tag to save for re-transform
+        TagMap tags = new TagMap();
+        tags.put("transform matrix","");
+    	
         Image image = null;
         AffineTransform transform = null;   // 画像の表示位置変換アフィン行列
         EastNorth imagePosition = null;     // en単位での画像中央位置
@@ -67,6 +71,12 @@ public class LexxPlussExporter extends OsmExporter {
         //System.out.println("pixel_per_en_x=" + pixel_per_en_x);
         double pixel_per_en_y = (mv.getHeight() / 2.0) / (leftop.north() - center.north());  // 1en当たりのピクセル数
         //System.out.println("pixel_per_en_y=" + pixel_per_en_y);
+
+        tags.put("view_center_lon", Double.valueOf(center.east()).toString());
+        tags.put("view_center_lat", Double.valueOf(center.north()).toString());
+        tags.put("pixel_per_en_x",Double.valueOf(pixel_per_en_x).toString());
+        tags.put("pixel_per_en_y",Double.valueOf(pixel_per_en_y).toString());
+
         double pic_offset_x = 0, pic_offset_y = 0;  // ピクセル単位の画像中央位置
         // This is now the offset in screen pixels
         for(Layer _layer : layers) {
@@ -81,6 +91,10 @@ public class LexxPlussExporter extends OsmExporter {
                 imagePosition = transformer.getImagePosition();
                 pic_offset_x = ((imagePosition.east() - center.east()) * pixel_per_en_x);
                 pic_offset_y = ((center.north() - imagePosition.north()) * pixel_per_en_y);
+                
+                tags.put("pic_offset_x",Double.valueOf(pic_offset_x).toString());
+                tags.put("pic_offset_y",Double.valueOf(pic_offset_y).toString());
+
                 /*
                 System.out.println("pixel_per_en=" + pixel_per_en);
                 System.out.println("center North=" + center.north());
@@ -116,6 +130,7 @@ public class LexxPlussExporter extends OsmExporter {
         //System.out.println("dataSet Count=" + dataSet.getNodes().size());
         //dataSet.lock();
         dataSet.beginUpdate();
+         
         List<Node> nodes = new ArrayList<Node>(dataSet.getNodes());
         double[] srcPts = new double[nodes.size() * 2];
         double[] dstPts = new double[srcPts.length];
@@ -148,6 +163,15 @@ public class LexxPlussExporter extends OsmExporter {
             System.out.println("Transform ShearY =" + transform.getShearY());
             */
             transform.inverseTransform(srcPts, 0, dstPts, 0, nodes.size());
+            
+           // save matrix in the tags
+            tags.put("m0",Double.valueOf(matrix[0]).toString());
+            tags.put("m1",Double.valueOf(matrix[1]).toString());
+            tags.put("m2",Double.valueOf(matrix[2]).toString());
+            tags.put("m3",Double.valueOf(matrix[3]).toString());
+            tags.put("m4",Double.valueOf(matrix[4]).toString());
+            tags.put("m5",Double.valueOf(matrix[5]).toString());
+            
         } catch (NoninvertibleTransformException e) {
             Logging.log(Level.WARNING, "Could not inverseTransform.", e);
             // 通常のOSM保存処理を実行させる
@@ -167,6 +191,12 @@ public class LexxPlussExporter extends OsmExporter {
             double scaleY = (100.0 * getMetersPerNorthing(picLayer, imagePosition)) / (initialImageScale * pixel_per_en_y);
             // System.out.println("scaleX=" + scaleX);
             // System.out.println("scaleY=" + scaleY);
+
+            tags.put("hw", Double.valueOf(hw).toString());
+            tags.put("hh", Double.valueOf(hh).toString());
+            tags.put("scaleX", Double.valueOf(scaleX).toString());
+            tags.put("scaleY", Double.valueOf(scaleY).toString());
+            
             for (Node node : nodes) {
                 double x = dstPts[ofs * 2];
                 double y = dstPts[ofs * 2 + 1];
@@ -194,7 +224,33 @@ public class LexxPlussExporter extends OsmExporter {
             super.doSave(file, layer);
             return;
         }
-
+        try {
+			List<Way> ways = new ArrayList<Way>(dataSet.getWays());
+			boolean exist = false;
+			for (Way way: ways) {
+				TagMap ts = way.getKeys();
+				for (Tag tag: ts.getTags()) {
+					if (tag.getKey() == "transform matrix") {
+						exist = true;
+						way.removeAll();
+						way.setKeys(tags);
+						break;
+					}
+				}
+				if (exist) {
+					break;
+				}
+			}
+			if (!exist) {
+				// create new Way
+				Way w = new Way();
+				w.setKeys(tags);
+				dataSet.addPrimitive(w);
+			}
+        }
+        catch (Exception e) {
+        	// do nothing
+        }
         dataSet.endUpdate();
         //dataSet.unlock();
         // 基底クラスのファイル保存メソッドを実行する
