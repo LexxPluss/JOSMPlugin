@@ -31,7 +31,7 @@ import static org.openstreetmap.josm.data.projection.Ellipsoid.WGS84;
 
 
 public class LexxPlussReader extends OsmReader {
-	
+
 	// for converting to lat long
 	private AffineTransform m_transform;
 	private double m_view_center_lon = 0.0;
@@ -44,7 +44,7 @@ public class LexxPlussReader extends OsmReader {
 	private double m_scaleY = 0.0;
 	private double m_hh = 0.0;
 	private double m_hw = 0.0;
-	
+
 	public boolean readTransformInfo(InputStream source)
 	{
 		boolean exist = false;
@@ -75,7 +75,7 @@ public class LexxPlussReader extends OsmReader {
 										}
 									}
 									else if (event_w == XMLStreamConstants.END_ELEMENT) {
-									    break;
+										break;
 									}
 								}
 								if (exist) {
@@ -106,7 +106,7 @@ public class LexxPlussReader extends OsmReader {
 		}
 		return exist;
 	}
-	
+
 	private void setTransformInfo(TagMap tags) {
 		double[] matrix = new double[6];
 		try {
@@ -128,15 +128,13 @@ public class LexxPlussReader extends OsmReader {
 			this.m_hh = Double.parseDouble(tags.get("hh"));
 		}
 		catch(Exception e) {
-			 System.out.println("Failed to get transform matrix");						
+			System.out.println("Failed to get transform matrix");
 		}
 		this.m_transform = new AffineTransform(matrix);
 	}
-	
 
-	
 	public DataSet execParse(InputStream source, ProgressMonitor progressMonitor)
-            throws IllegalDataException
+			throws IllegalDataException
 	{
 		return doParseDataSet(source, progressMonitor);
 	}
@@ -163,7 +161,6 @@ public class LexxPlussReader extends OsmReader {
 				double north = this.m_view_center_lat - (cvt_point[1] / this.m_pixel_per_en_y);
 				EastNorth pos = new EastNorth(east, north);
 				nd.setEastNorth(pos);
-				
 			}
 			catch (Exception e) {
 				return;
@@ -171,123 +168,124 @@ public class LexxPlussReader extends OsmReader {
 			return;
 		}
 	}
-	
+
 	@Override
-    protected Node parseNode() throws XMLStreamException {
-        String lat = parser.getAttributeValue(null, "lat");
-        String lon = parser.getAttributeValue(null, "lon");
-        if ((0 >= lat.length()) || (0 >= lon.length())) {
-        	NodeData nd = new NodeData(0);
-        	try {
-        		readCommon(nd);
-        		parseNodeTags(nd);
-        		convert2LatLon(nd);
-        		return (Node) buildPrimitive(nd);
-        	}catch (Exception e) {
-        		
-        	}
-        	
-    	}
-        try {
-            return parseNode(lat, lon, this::readCommon, this::parseNodeTags);
-        } catch (IllegalDataException e) {
-            handleIllegalDataException(e);
-        }
-        return null;
-    }
-	
+	protected Node parseNode() throws XMLStreamException {
+		String lat = parser.getAttributeValue(null, "lat");
+		String lon = parser.getAttributeValue(null, "lon");
+		if ((0 >= lat.length()) || (0 >= lon.length())) {
+			NodeData nd = new NodeData(0);
+			try {
+				readCommon(nd);
+				parseNodeTags(nd);
+				convert2LatLon(nd);
+				return (Node) buildPrimitive(nd);
+			}catch (Exception e) {
+				
+			}
+			
+		}
+		try {
+			return parseNode(lat, lon, this::readCommon, this::parseNodeTags);
+		} catch (IllegalDataException e) {
+			handleIllegalDataException(e);
+		}
+		return null;
+	}
+
 	/*
 	 * Below From here, redefine super class functions due to private classes
 	 * but, these are completely same as super
 	 * ここから下は、継承元のクラスの関数がprivateでアクセスできなかったために、
 	 * 関数をそのままコピーしているだけで、特に変更は加えていない。
+	 * 継承元関数: https://github.com/openstreetmap/josm/blob/597cab135f3dad3569b1c273162910a0af88bb8e/src/org/openstreetmap/josm/io/OsmReader.java
 	 * */
-    private static final Set<String> COMMON_XML_ATTRIBUTES = new TreeSet<>();
+	private static final Set<String> COMMON_XML_ATTRIBUTES = new TreeSet<>();
 
-    static {
-        COMMON_XML_ATTRIBUTES.add("id");
-        COMMON_XML_ATTRIBUTES.add("timestamp");
-        COMMON_XML_ATTRIBUTES.add("user");
-        COMMON_XML_ATTRIBUTES.add("uid");
-        COMMON_XML_ATTRIBUTES.add("visible");
-        COMMON_XML_ATTRIBUTES.add("version");
-        COMMON_XML_ATTRIBUTES.add("action");
-        COMMON_XML_ATTRIBUTES.add("changeset");
-        COMMON_XML_ATTRIBUTES.add("lat");
-        COMMON_XML_ATTRIBUTES.add("lon");
-    }
+	static {
+		COMMON_XML_ATTRIBUTES.add("id");
+		COMMON_XML_ATTRIBUTES.add("timestamp");
+		COMMON_XML_ATTRIBUTES.add("user");
+		COMMON_XML_ATTRIBUTES.add("uid");
+		COMMON_XML_ATTRIBUTES.add("visible");
+		COMMON_XML_ATTRIBUTES.add("version");
+		COMMON_XML_ATTRIBUTES.add("action");
+		COMMON_XML_ATTRIBUTES.add("changeset");
+		COMMON_XML_ATTRIBUTES.add("lat");
+		COMMON_XML_ATTRIBUTES.add("lon");
+	}
 
-    protected void handleIllegalDataException(IllegalDataException e) throws XMLStreamException {
-        Throwable cause = e.getCause();
-        if (cause instanceof XMLStreamException) {
-            throw (XMLStreamException) cause;
-        } else {
-            throwException(e);
-        }
-    }
+	protected void handleIllegalDataException(IllegalDataException e) throws XMLStreamException {
+		Throwable cause = e.getCause();
+		if (cause instanceof XMLStreamException) {
+			throw (XMLStreamException) cause;
+		} else {
+			throwException(e);
+		}
+	}
 
-    private void parseNodeTags(NodeData n) throws IllegalDataException {
-        try {
-            while (parser.hasNext()) {
-                int event = parser.next();
-                if (event == XMLStreamConstants.START_ELEMENT) {
-                    if ("tag".equals(parser.getLocalName())) {
-                        parseTag(n);
-                    } else {
-                        parseUnknown();
-                    }
-                } else if (event == XMLStreamConstants.END_ELEMENT) {
-                    return;
-                }
-            }
-        } catch (XMLStreamException e) {
-            throw new IllegalDataException(e);
-        }
-    }
-    
-    private void parseTag(Tagged t) throws XMLStreamException {
-        String key = parser.getAttributeValue(null, "k");
-        String value = parser.getAttributeValue(null, "v");
-        try {
-            parseTag(t, key, value);
-        } catch (IllegalDataException e) {
-            throwException(e);
-        }
-        jumpToEnd();
-    }
-	
-    private void readCommon(PrimitiveData current) throws IllegalDataException {
-        try {
-            parseId(current, getLong("id"));
-            parseTimestamp(current, parser.getAttributeValue(null, "timestamp"));
-            parseUser(current, parser.getAttributeValue(null, "user"), parser.getAttributeValue(null, "uid"));
-            parseVisible(current, parser.getAttributeValue(null, "visible"));
-            parseVersion(current, parser.getAttributeValue(null, "version"));
-            parseAction(current, parser.getAttributeValue(null, "action"));
-            parseChangeset(current, parser.getAttributeValue(null, "changeset"));
+	private void parseNodeTags(NodeData n) throws IllegalDataException {
+		try {
+			while (parser.hasNext()) {
+				int event = parser.next();
+				if (event == XMLStreamConstants.START_ELEMENT) {
+					if ("tag".equals(parser.getLocalName())) {
+						parseTag(n);
+					} else {
+						parseUnknown();
+					}
+				} else if (event == XMLStreamConstants.END_ELEMENT) {
+					return;
+				}
+			}
+		} catch (XMLStreamException e) {
+			throw new IllegalDataException(e);
+		}
+	}
 
-            if (options.contains(Options.SAVE_ORIGINAL_ID)) {
-                parseTag(current, "current_id", Long.toString(getLong("id")));
-            }
-            if (options.contains(Options.CONVERT_UNKNOWN_TO_TAGS)) {
-                for (int i = 0; i < parser.getAttributeCount(); i++) {
-                    if (!COMMON_XML_ATTRIBUTES.contains(parser.getAttributeLocalName(i))) {
-                        parseTag(current, parser.getAttributeLocalName(i), parser.getAttributeValue(i));
-                    }
-                }
-            }
-        } catch (UncheckedParseException | XMLStreamException e) {
-            throw new IllegalDataException(e);
-        }
-    }
+	private void parseTag(Tagged t) throws XMLStreamException {
+		String key = parser.getAttributeValue(null, "k");
+		String value = parser.getAttributeValue(null, "v");
+		try {
+			parseTag(t, key, value);
+		} catch (IllegalDataException e) {
+			throwException(e);
+		}
+		jumpToEnd();
+	}
 
-    private long getLong(String name) throws XMLStreamException {
-        String value = parser.getAttributeValue(null, name);
-        try {
-            return getLong(name, value);
-        } catch (IllegalDataException e) {
-            throwException(e);
-        }
-        return 0; // should not happen
-    }
+	private void readCommon(PrimitiveData current) throws IllegalDataException {
+		try {
+			parseId(current, getLong("id"));
+			parseTimestamp(current, parser.getAttributeValue(null, "timestamp"));
+			parseUser(current, parser.getAttributeValue(null, "user"), parser.getAttributeValue(null, "uid"));
+			parseVisible(current, parser.getAttributeValue(null, "visible"));
+			parseVersion(current, parser.getAttributeValue(null, "version"));
+			parseAction(current, parser.getAttributeValue(null, "action"));
+			parseChangeset(current, parser.getAttributeValue(null, "changeset"));
+
+			if (options.contains(Options.SAVE_ORIGINAL_ID)) {
+				parseTag(current, "current_id", Long.toString(getLong("id")));
+			}
+			if (options.contains(Options.CONVERT_UNKNOWN_TO_TAGS)) {
+				for (int i = 0; i < parser.getAttributeCount(); i++) {
+					if (!COMMON_XML_ATTRIBUTES.contains(parser.getAttributeLocalName(i))) {
+						parseTag(current, parser.getAttributeLocalName(i), parser.getAttributeValue(i));
+					}
+				}
+			}
+		} catch (UncheckedParseException | XMLStreamException e) {
+			throw new IllegalDataException(e);
+		}
+	}
+
+	private long getLong(String name) throws XMLStreamException {
+		String value = parser.getAttributeValue(null, name);
+		try {
+			return getLong(name, value);
+		} catch (IllegalDataException e) {
+			throwException(e);
+		}
+		return 0; // should not happen
+	}
 }
