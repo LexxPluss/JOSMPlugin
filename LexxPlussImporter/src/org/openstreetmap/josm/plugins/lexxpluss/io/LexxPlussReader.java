@@ -173,7 +173,7 @@ public class LexxPlussReader extends OsmReader {
 	protected Node parseNode() throws XMLStreamException {
 		String lat = parser.getAttributeValue(null, "lat");
 		String lon = parser.getAttributeValue(null, "lon");
-		if ((0 >= lat.length()) || (0 >= lon.length())) {
+		if (lat == null || lon == null || (0 >= lat.length()) || (0 >= lon.length())) {
 			NodeData nd = new NodeData(0);
 			try {
 				readCommon(nd);
