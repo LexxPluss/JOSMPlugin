@@ -46,5 +46,6 @@ $ svn co https://josm.openstreetmap.de/osmsvn/applications/editors/josm  # ベ�
 $ sudo update-alternatives --config java  # java-8-openjdk を選択( josm本体はJava8でビルドする必要があるらしい )
 $ sudo update-alternatives --config javac  # java-8-openjdk を選択( josm本体はJava8でビルドする必要があるらしい )
 $ cd ~/workspace/josm/core
+$ export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/jre
 $ ant  # josm本体のビルド(動作確認)
 ```
