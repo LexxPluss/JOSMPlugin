@@ -210,6 +210,9 @@ public class LexxPlussExporter extends OsmExporter {
                 // System.out.println("Dst3 =(" + x + "," + y + ")");
                 x = hw + x;
                 y = hh + y;
+                // 浮動小数点による誤差への対処
+                x = Math.floor(x * 1000000) / 1000000;
+                y = Math.floor(y * 1000000) / 1000000;
                 //System.out.println("Dst4 =(" + x + "," + y + ")");
                 // 変換した座標をタグにセット
                 // System.out.println("Update Keys=" + node.getNumKeys());
