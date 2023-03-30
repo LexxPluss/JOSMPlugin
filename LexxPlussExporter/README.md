@@ -29,10 +29,10 @@ $ cd ~
 $ git clone git@github.com:LexxPluss/JOSMPlugin.git
 $ mv ~/JOSMPlugin/LexxPlussExporter ~/workspace/josm/plugins
 $ cd ~/workspace/josm/plugins/PicLayer
-$ ant # PicLayerがビルド済みでPicLayer.jarができている必要がある
 $ sudo update-alternatives --config java  # java-11-openjdk-amd64 を選択( josm本体はJav11でビルドする必要があるらしい )
 $ sudo update-alternatives --config javac  # java-11-openjdk-amd64 を選択( josm本体はJava11でビルドする必要があるらしい )
 $ export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+$ ant # PicLayerがビルド済みでPicLayer.jarができている必要がある
 $ cd ~/workspace/josm/plugins/LexxPlussExporter
 $ ant install
 ```
