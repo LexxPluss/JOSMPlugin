@@ -26,7 +26,7 @@ antコマンドによるビルドが可能な環境でjosm/plugins/LexxPLussExpo
 Ubunti18.04環境での一例
 ```
 $ cd ~
-$ git clone git@github.com:LexxPluss/JOSMPlugin.git
+$ git clone https://github.com/LexxPluss/JOSMPlugin.git
 $ mv ~/JOSMPlugin/LexxPlussExporter ~/workspace/josm/plugins
 $ cd ~/workspace/josm/plugins/PicLayer
 $ sudo update-alternatives --config java  # java-11-openjdk-amd64 を選択( pluginはJava11でビルドする必要があるらしい )
