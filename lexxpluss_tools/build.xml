@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ Copyright (c) 2024, LexxPluss Inc.
+ All rights reserved.
+-->
+<project name="lexxpluss_tools" default="dist" basedir=".">
+    <property name="java.lang.version" value="11"/>
+    <property name="commit.message" value="Commit message"/>
+    <property name="plugin.main.version" value="19000"/>
+    <property name="plugin.canloadatruntime" value="true"/>
+    <property name="plugin.author" value="LexxPluss"/>
+    <property name="plugin.class" value="org.openstreetmap.josm.plugins.lexxpluss.ToolsPlugin"/>
+    <property name="plugin.description" value="LexxPluss Tool"/>
+    <property name="plugin.icon" value="images/mapmode/lexxpluss_tools.png"/>
+    <property name="plugin.link" value="https://wiki.openstreetmap.org/wiki/JOSM/Plugins/lexxpluss_tools"/>
+    <import file="../build-common.xml"/>
+</project>
