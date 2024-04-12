@@ -36,25 +36,21 @@ public class IntermediateGoalAction extends JosmAction {
     public void actionPerformed(ActionEvent e) {
         var ds = getLayerManager().getEditDataSet();
         var way = ds.getLastSelectedWay();
-        var count = way.getNodesCount();
-        var nodes = way.getNodes();
-        var n0 = nodes.get(0);
-        var n1 = nodes.get(count - 1);
-        ds.setSelected(n0);
-        SplitWayAction.runOn(ds);
-        ds.setSelected(n1);
-        SplitWayAction.runOn(ds);
-        ds.setSelected(way);
         Collection<Command> cmds = new LinkedList<>();
         cmds.add(new ChangePropertyCommand(way, "line_info", "\"\""));
         cmds.add(new ChangePropertyCommand(way, "oneway", "yes"));
+        var nodes = way.getNodes();
         var max = ToolsPlugin.getMaxId(ds.getNodes(), "intermediate_goal_id");
         var key = "intermediate_goal_id";
-        if (!n0.hasKey(key))
-            cmds.add(new ChangePropertyCommand(n0, key, Integer.toString(max + 1)));
-        if (!n1.hasKey(key))
-            cmds.add(new ChangePropertyCommand(n1, key, Integer.toString(max + 2)));
+        for (var n : nodes) {
+            if (!n.hasKey(key))
+                cmds.add(new ChangePropertyCommand(n, key, Integer.toString(++max)));
+        }
         UndoRedoHandler.getInstance().add(new SequenceCommand("Intermediate goal", cmds));
+        nodes.forEach(n -> {
+            ds.setSelected(n);
+            SplitWayAction.runOn(ds);
+        });
     }
 
     @Override
