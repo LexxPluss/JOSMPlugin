@@ -51,6 +51,7 @@ public class IntermediateGoalAction extends JosmAction {
             ds.setSelected(n);
             SplitWayAction.runOn(ds);
         });
+        ds.clearSelection();
     }
 
     @Override
