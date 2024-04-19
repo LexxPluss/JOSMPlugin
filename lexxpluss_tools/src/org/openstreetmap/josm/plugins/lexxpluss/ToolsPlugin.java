@@ -26,10 +26,24 @@ public class ToolsPlugin extends Plugin {
      */
     public ToolsPlugin(PluginInformation info) {
         super(info);
-        var menu = MainApplication.getMenu().moreToolsMenu;
-        if (menu.getMenuComponentCount() > 0)
-            menu.addSeparator();
-        MainMenu.add(menu, new IntermediateGoalAction());
+        var editMenu = MainApplication.getMenu().editMenu;
+        int paste_item_index = -1;
+        for (int i = 0; i < editMenu.getItemCount(); ++i) {
+            var item = editMenu.getItem(i);
+            if (item != null && item.getAction() == MainApplication.getMenu().paste) {
+                paste_item_index = i;
+                break;
+            }
+        }
+        if (paste_item_index >= 0) {
+            editMenu.remove(paste_item_index);
+            MainApplication.getMenu().paste.destroy();
+            MainMenu.add(editMenu, new PasteAndRenumberAction(), false, paste_item_index);
+        }
+        var moreMenu = MainApplication.getMenu().moreToolsMenu;
+        if (moreMenu.getMenuComponentCount() > 0)
+            moreMenu.addSeparator();
+        MainMenu.add(moreMenu, new IntermediateGoalAction());
     }
 
     @Override
