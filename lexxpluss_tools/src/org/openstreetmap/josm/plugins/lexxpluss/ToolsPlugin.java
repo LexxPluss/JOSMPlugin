@@ -55,9 +55,9 @@ public class ToolsPlugin extends Plugin {
         var moreMenu = MainApplication.getMenu().moreToolsMenu;
         if (moreMenu.getMenuComponentCount() > 0)
             moreMenu.addSeparator();
+        MainMenu.add(moreMenu, new IntermediateGoalAction());
         MainMenu.add(moreMenu, new AMRGoalAction());
         MainMenu.add(moreMenu, new MovableAreaAction());
-        MainMenu.add(moreMenu, new IntermediateGoalAction());
     }
 
     @Override
@@ -122,9 +122,8 @@ public class ToolsPlugin extends Plugin {
                         var max = ToolsPlugin.getMaxId(way.getDataSet().getWays(), key);
                         var s = Integer.toString(max + 1);
                         way.put(key, s);
-                        if (key.equals("space_id")) {
+                        if (key.equals("space_id"))
                             way.put("area_name" , "park" + s);
-                        }
                     }
                 });
         way.getNodes().forEach(n -> nodeIdRenumber(n));
