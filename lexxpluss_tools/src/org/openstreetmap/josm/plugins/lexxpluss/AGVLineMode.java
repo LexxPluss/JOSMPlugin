@@ -6,6 +6,7 @@
 
 package org.openstreetmap.josm.plugins.lexxpluss;
 
+import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.LinkedList;
 import org.openstreetmap.josm.actions.mapmode.MapMode;
@@ -22,8 +23,6 @@ import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.tools.ImageProvider;
-
-import java.awt.event.MouseEvent;
 
 /**
  * MapMode for AGV scene creation.
@@ -67,7 +66,6 @@ public class AGVLineMode extends MapMode {
             return;
         var pos = e.getPoint();
         var en_base = MainApplication.getMap().mapView.getEastNorth(pos.x, pos.y);
-        var ds = getLayerManager().getEditDataSet();
         var nodes = new Node[6];
         nodes[0] = new Node(en_base);
         nodes[1] = new Node(en_base.add( 0.0, 5.0));
@@ -75,6 +73,7 @@ public class AGVLineMode extends MapMode {
         nodes[3] = new Node(en_base.add(-1.0,  2.0));
         nodes[4] = new Node(en_base.add(-1.0,  0.0));
         nodes[5] = new Node(en_base.add( 1.0,  2.0));
+        var ds = getLayerManager().getEditDataSet();
         var max_node_id = ToolsPlugin.getMaxId(ds.getNodes(), "agv_node_id");
         nodes[0].put("agv_node_id", Integer.toString(max_node_id + 1));
         nodes[1].put("agv_node_id", Integer.toString(max_node_id + 2));

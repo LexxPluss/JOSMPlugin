@@ -9,10 +9,8 @@ package org.openstreetmap.josm.plugins.lexxpluss;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Arrays;
-
 import static org.openstreetmap.josm.gui.help.HelpUtil.ht;
 import static org.openstreetmap.josm.tools.I18n.tr;
-
 import org.openstreetmap.josm.actions.AbstractPasteAction;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.data.osm.Node;

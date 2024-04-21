@@ -14,7 +14,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
 import java.util.LinkedList;
-
 import org.openstreetmap.josm.actions.mapmode.MapMode;
 import org.openstreetmap.josm.command.Command;
 import org.openstreetmap.josm.command.MoveCommand;

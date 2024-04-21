@@ -10,7 +10,6 @@ import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
-
 import org.openstreetmap.josm.actions.mapmode.MapMode;
 import org.openstreetmap.josm.command.AddCommand;
 import org.openstreetmap.josm.command.Command;
