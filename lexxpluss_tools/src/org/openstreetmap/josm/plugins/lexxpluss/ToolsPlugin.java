@@ -59,6 +59,7 @@ public class ToolsPlugin extends Plugin {
         MainMenu.add(moreMenu, new AMRGoalAction());
         MainMenu.add(moreMenu, new MovableAreaAction());
         MainMenu.add(moreMenu, new SyncAreaAction());
+        MainMenu.add(moreMenu, new SafetyAreaAction());
     }
 
     @Override
