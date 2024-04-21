@@ -48,8 +48,10 @@ public class ToolsPlugin extends Plugin {
 
     @Override
     public void mapFrameInitialized(MapFrame oldFrame, MapFrame newFrame) {
-        if (oldFrame == null && newFrame != null)
+        if (oldFrame == null && newFrame != null) {
             newFrame.addMapMode(new IconToggleButton(new AGVMode()));
+            newFrame.addMapMode(new IconToggleButton(new KeyMoveMode()));
+        }
     }
 
     /**
