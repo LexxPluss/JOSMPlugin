@@ -28,7 +28,7 @@ public class IntermediateGoalAction extends JosmAction {
      * Constructs a new {@code IntermediateGoalAction}.
      */
     public IntermediateGoalAction() {
-        super("Set Intermediate Goal", "mapmode/intermediategoal", "Set Intermediate Goal",
+        super("Set Intermediate Goal", "mapmode/intermediategoalaction", "Set Intermediate Goal",
                 null, false);
     }
 

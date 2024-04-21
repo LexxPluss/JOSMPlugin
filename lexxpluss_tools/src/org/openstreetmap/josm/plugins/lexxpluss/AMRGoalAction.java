@@ -27,7 +27,7 @@ public class AMRGoalAction extends JosmAction {
      * Constructs a new {@code AMRGoalAction}.
      */
     public AMRGoalAction() {
-        super("Set AMR Goal", "mapmode/amrgoal", "Set AMR Goal",
+        super("Set AMR Goal", "mapmode/amrgoalaction", "Set AMR Goal",
                 null, false);
     }
 

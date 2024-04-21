@@ -28,13 +28,13 @@ import java.awt.event.MouseEvent;
 /**
  * MapMode for AGV scene creation.
  */
-public class AGVMode extends MapMode {
+public class AGVLineMode extends MapMode {
 
     /**
-     * Constructs a new {@code AGVMode}.
+     * Constructs a new {@code AGVLineMode}.
      */
-    public AGVMode() {
-        super("AGV Mode", "agvmode", "AGV Mode",
+    public AGVLineMode() {
+        super("AGV Line Mode", "agvlinemode", "AGV Line Mode",
                 null,
                 ImageProvider.getCursor("crosshair", null));
     }
