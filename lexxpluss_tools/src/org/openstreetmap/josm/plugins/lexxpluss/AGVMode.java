@@ -26,7 +26,7 @@ import org.openstreetmap.josm.tools.ImageProvider;
 import java.awt.event.MouseEvent;
 
 /**
- * Action for the LexxPluss Tools plugin.
+ * MapMode for AGV scene creation.
  */
 public class AGVMode extends MapMode {
 
@@ -81,7 +81,7 @@ public class AGVMode extends MapMode {
         Collection<Command> cmds = new LinkedList<>();
         var max_goal_id = ToolsPlugin.getMaxId(ds.getWays(), "goal_id");
         addWayCommands(ds, cmds, nodes[0], nodes[1], new TagMap("line_info", "agv_pose"));
-        addWayCommands(ds, cmds, nodes[2], nodes[3], new TagMap("line_info", "goal_pose","goal_id", Integer.toString(max_goal_id + 1)));
+        addWayCommands(ds, cmds, nodes[2], nodes[3], new TagMap("line_info", "goal_pose", "goal_id", Integer.toString(max_goal_id + 1)));
         addWayCommands(ds, cmds, nodes[4], nodes[5], new TagMap("line_info", "goal_pose", "goal_id", Integer.toString(max_goal_id + 2)));
         UndoRedoHandler.getInstance().add(new SequenceCommand("Create AGV Scene", cmds));
     }
