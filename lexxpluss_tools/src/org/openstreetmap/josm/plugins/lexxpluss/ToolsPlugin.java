@@ -58,6 +58,7 @@ public class ToolsPlugin extends Plugin {
         MainMenu.add(moreMenu, new IntermediateGoalAction());
         MainMenu.add(moreMenu, new AMRGoalAction());
         MainMenu.add(moreMenu, new MovableAreaAction());
+        MainMenu.add(moreMenu, new SyncAreaAction());
     }
 
     @Override
@@ -116,7 +117,7 @@ public class ToolsPlugin extends Plugin {
      * @param way the way
      */
     static public void wayIdRenumber(Way way) {
-        Arrays.asList("goal_id", "space_id")
+        Arrays.asList("goal_id", "space_id", "sync_id")
                 .forEach(key -> {
                     if (way.hasKey(key)) {
                         var max = ToolsPlugin.getMaxId(way.getDataSet().getWays(), key);
@@ -124,6 +125,8 @@ public class ToolsPlugin extends Plugin {
                         way.put(key, s);
                         if (key.equals("space_id"))
                             way.put("area_name" , "park" + s);
+                        else if (key.equals("sync_id"))
+                            way.put("area_name" , "sync" + s);
                     }
                 });
         way.getNodes().forEach(n -> nodeIdRenumber(n));
