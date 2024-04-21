@@ -82,7 +82,7 @@ public class AGVLineMode extends MapMode {
         addWayCommands(ds, cmds, nodes[0], nodes[1], new TagMap("line_info", "agv_pose"));
         addWayCommands(ds, cmds, nodes[2], nodes[3], new TagMap("line_info", "goal_pose", "goal_id", Integer.toString(max_goal_id + 1)));
         addWayCommands(ds, cmds, nodes[4], nodes[5], new TagMap("line_info", "goal_pose", "goal_id", Integer.toString(max_goal_id + 2)));
-        UndoRedoHandler.getInstance().add(new SequenceCommand("Create AGV Scene", cmds));
+        UndoRedoHandler.getInstance().add(new SequenceCommand("AGV Scene", cmds));
     }
 
     /**

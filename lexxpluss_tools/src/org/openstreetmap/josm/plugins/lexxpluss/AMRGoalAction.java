@@ -41,7 +41,7 @@ public class AMRGoalAction extends JosmAction {
             var max = ToolsPlugin.getMaxId(ds.getWays(), "goal_id");
             cmds.add(new ChangePropertyCommand(way, "goal_id", Integer.toString(++max)));
         }
-        UndoRedoHandler.getInstance().add(new SequenceCommand("Intermediate goal", cmds));
+        UndoRedoHandler.getInstance().add(new SequenceCommand("AMR goal", cmds));
     }
 
     @Override

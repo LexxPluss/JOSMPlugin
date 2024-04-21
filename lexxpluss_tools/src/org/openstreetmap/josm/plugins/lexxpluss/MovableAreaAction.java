@@ -37,7 +37,7 @@ public class MovableAreaAction extends JosmAction {
         var way = ds.getLastSelectedWay();
         Collection<Command> cmds = new LinkedList<>();
         cmds.add(new ChangePropertyCommand(way, "area_base", "movable"));
-        UndoRedoHandler.getInstance().add(new SequenceCommand("Intermediate goal", cmds));
+        UndoRedoHandler.getInstance().add(new SequenceCommand("Movable area", cmds));
     }
 
     @Override

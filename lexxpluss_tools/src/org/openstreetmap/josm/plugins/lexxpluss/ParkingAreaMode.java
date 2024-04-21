@@ -84,6 +84,6 @@ public class ParkingAreaMode extends MapMode {
         });
         w.addNode(nodes[0]);
         cmds.add(new AddCommand(ds, w));
-        UndoRedoHandler.getInstance().add(new SequenceCommand("Create Parking Area", cmds));
+        UndoRedoHandler.getInstance().add(new SequenceCommand("Parking Area", cmds));
     }
 }
