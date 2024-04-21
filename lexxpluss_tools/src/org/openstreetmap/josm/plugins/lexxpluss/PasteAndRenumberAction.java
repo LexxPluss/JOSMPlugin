@@ -69,11 +69,15 @@ public class PasteAndRenumberAction extends AbstractPasteAction {
      * @param way the way
      */
     private void wayIdRenumber(Way way) {
-        Arrays.asList("goal_id")
+        Arrays.asList("goal_id", "space_id")
                 .forEach(key -> {
                     if (way.hasKey(key)) {
                         var max = ToolsPlugin.getMaxId(way.getDataSet().getWays(), key);
-                        way.put(key, Integer.toString(max + 1));
+                        var s = Integer.toString(max + 1);
+                        way.put(key, s);
+                        if (key.equals("space_id")) {
+                            way.put("area_name" , "park" + s);
+                        }
                     }
                 });
         way.getNodes().forEach(n -> nodeIdRenumber(n));

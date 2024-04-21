@@ -52,6 +52,7 @@ public class ToolsPlugin extends Plugin {
         if (oldFrame == null && newFrame != null) {
             newFrame.addMapMode(new IconToggleButton(new AGVLineMode()));
             newFrame.addMapMode(new IconToggleButton(new KeyMoveMode()));
+            newFrame.addMapMode(new IconToggleButton(new ParkingAreaMode()));
         }
     }
 
