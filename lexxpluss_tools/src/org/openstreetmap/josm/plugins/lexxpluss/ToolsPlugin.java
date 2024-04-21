@@ -43,6 +43,7 @@ public class ToolsPlugin extends Plugin {
         var moreMenu = MainApplication.getMenu().moreToolsMenu;
         if (moreMenu.getMenuComponentCount() > 0)
             moreMenu.addSeparator();
+        MainMenu.add(moreMenu, new AMRGoalAction());
         MainMenu.add(moreMenu, new IntermediateGoalAction());
     }
 
