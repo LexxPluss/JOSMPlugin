@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
+import org.openstreetmap.josm.data.validation.OsmValidator;
 import org.openstreetmap.josm.gui.IconToggleButton;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.MainMenu;
@@ -61,6 +62,7 @@ public class ToolsPlugin extends Plugin {
         MainMenu.add(moreMenu, new SyncAreaAction());
         MainMenu.add(moreMenu, new SafetyAreaAction());
         MainMenu.add(moreMenu, new NonStopAreaAction());
+        OsmValidator.addTest(IdDuplicateTest.class);
     }
 
     @Override
