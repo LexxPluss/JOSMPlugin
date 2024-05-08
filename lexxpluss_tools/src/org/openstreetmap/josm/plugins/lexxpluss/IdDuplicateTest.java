@@ -24,7 +24,7 @@ public class IdDuplicateTest extends Test {
      * Constructs a new {@code IdDuplicateTest}.
      */
     public IdDuplicateTest() {
-        super("IdDuplicate", "Check for duplicate IDs");
+        super("Duplicate ID check (LexxPluss)", "Duplicate ID check for LexxPluss");
     }
 
     @Override
@@ -59,7 +59,7 @@ public class IdDuplicateTest extends Test {
                     .filter(v -> v != null)
                     .collect(Collectors.toSet());
             if (values.contains(value)) {
-                errors.add(TestError.builder(this, Severity.WARNING, 6000)
+                errors.add(TestError.builder(this, Severity.ERROR, 6001)
                         .message("Duplicate tag key:" + key + " value:" + value)
                         .primitives(current)
                         .build());
