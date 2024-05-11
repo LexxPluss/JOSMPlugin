@@ -52,6 +52,7 @@ public class CustomTagTest extends Test {
         checkNumericTagValue(way);
         checkTagValue(way);
         checkTagCombination(way);
+        checkSplitWay(way);
         var other_ways = way.getDataSet().getWays().stream()
                 .filter(w -> w != way)
                 .collect(Collectors.toList());
@@ -191,8 +192,22 @@ public class CustomTagTest extends Test {
 
     /*
      * todo: node & way combination
-     * todo: split way
      */
+
+    /**
+     * Check for split way.
+     * @param way the way
+     */
+    private void checkSplitWay(Way way) {
+        var value = way.get("line_info");
+        if (value != null && value.equals("\"\"")) {
+            var oneway = way.get("oneway");
+            if (oneway != null && (oneway.equals("yes") || oneway.equals("no"))) {
+                if (way.getNodesCount() != 2)
+                    addError(way, 6004, "Way with oneway must split");
+            }
+        }
+    }
 
     /**
      * Check for duplicate IDs.
@@ -208,7 +223,7 @@ public class CustomTagTest extends Test {
                     .filter(v -> v != null)
                     .collect(Collectors.toSet());
             if (values.contains(value))
-                addError(current, 6003, "Duplicate tag:" + key + "=" + value);
+                addError(current, 6005, "Duplicate tag:" + key + "=" + value);
         }
     }
 
