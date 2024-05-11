@@ -82,7 +82,7 @@ public class KeyMoveMode extends MapMode implements AWTEventListener {
                     code == KeyEvent.VK_LEFT  ? new EastNorth(-0.05,  0.00) :
                     code == KeyEvent.VK_RIGHT ? new EastNorth( 0.05,  0.00) : null;
             if (en != null) {
-                move(shift ? en.scale(4) : en);
+                move(shift ? en : en.scale(4));
                 MainApplication.getMap().repaint();
             }
         }
