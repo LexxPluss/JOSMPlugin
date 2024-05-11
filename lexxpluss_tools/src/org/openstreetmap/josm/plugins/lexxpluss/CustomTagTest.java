@@ -80,10 +80,7 @@ public class CustomTagTest extends Test {
         }
         for (var key : primitive.keySet()) {
             if (!validTags.contains(key))
-                errors.add(TestError.builder(this, Severity.ERROR, 6001)
-                        .message("Invalid tag:" + key)
-                        .primitives(primitive)
-                        .build());
+                addError(primitive, 6001, "Invalid tag:" + key);
         }
     }
 
@@ -110,10 +107,7 @@ public class CustomTagTest extends Test {
                 try {
                     Integer.parseInt(intValue);
                 } catch (NumberFormatException e) {
-                    errors.add(TestError.builder(this, Severity.ERROR, 6002)
-                            .message("Invalid tag value:" + k + "=" + value)
-                            .primitives(primitive)
-                            .build());
+                    addError(primitive, 6002, "Invalid tag value:" + k + "=" + value);
                 }
 
             }
@@ -121,10 +115,7 @@ public class CustomTagTest extends Test {
                 try {
                     Double.parseDouble(value);
                 } catch (NumberFormatException e) {
-                    errors.add(TestError.builder(this, Severity.ERROR, 6002)
-                            .message("Invalid tag value:" + k + "=" + value)
-                            .primitives(primitive)
-                            .build());
+                    addError(primitive, 6002, "Invalid tag value:" + k + "=" + value);
                 }
             }
         });
@@ -149,23 +140,14 @@ public class CustomTagTest extends Test {
                 Map.entry("rear_right_safety",  Set.of("off")));
         primitive.keySet().forEach(k -> {
             var valueSet = tagMap.get(k);
-            if (valueSet != null && !valueSet.contains(primitive.get(k))) {
-                errors.add(TestError.builder(this, Severity.ERROR, 6002)
-                        .message("Invalid tag value:" + k + "=" + primitive.get(k))
-                        .primitives(primitive)
-                        .build());
-
-            }
+            if (valueSet != null && !valueSet.contains(primitive.get(k)))
+                addError(primitive, 6002, "Invalid tag value:" + k + "=" + primitive.get(k));
             if (k.equals("area_name")) {
                 var value = primitive.get(k);
                 if (value != null) {
                     if (!value.equals("warning") && !value.equals("no stop") &&
-                            !value.startsWith("park") && !value.startsWith("sync")) {
-                        errors.add(TestError.builder(this, Severity.ERROR, 6002)
-                                .message("Invalid tag value:" + k + "=" + value)
-                                .primitives(primitive)
-                                .build());
-                    }
+                            !value.startsWith("park") && !value.startsWith("sync"))
+                        addError(primitive, 6002, "Invalid tag value:" + k + "=" + value);
                 }
             }
         });
@@ -184,12 +166,21 @@ public class CustomTagTest extends Test {
                     .map(p -> p.get(key))
                     .filter(v -> v != null)
                     .collect(Collectors.toSet());
-            if (values.contains(value)) {
-                errors.add(TestError.builder(this, Severity.ERROR, 6003)
-                        .message("Duplicate tag:" + key + "=" + value)
-                        .primitives(current)
-                        .build());
-            }
+            if (values.contains(value))
+                addError(current, 6003, "Duplicate tag:" + key + "=" + value);
         }
+    }
+
+    /**
+     * Add an error.
+     * @param primitive the primitive
+     * @param number the error number
+     * @param message the error message
+     */
+    private void addError(OsmPrimitive primitive, int number, String message) {
+        errors.add(TestError.builder(this, Severity.ERROR, number)
+                .message(message)
+                .primitives(primitive)
+                .build());
     }
 }
