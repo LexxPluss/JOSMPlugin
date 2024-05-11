@@ -62,7 +62,7 @@ public class ToolsPlugin extends Plugin {
         MainMenu.add(moreMenu, new SyncAreaAction());
         MainMenu.add(moreMenu, new SafetyAreaAction());
         MainMenu.add(moreMenu, new NonStopAreaAction());
-        OsmValidator.addTest(IdDuplicateTest.class);
+        OsmValidator.addTest(CustomTagTest.class);
     }
 
     @Override
