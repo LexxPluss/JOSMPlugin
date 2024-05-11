@@ -153,6 +153,47 @@ public class CustomTagTest extends Test {
         });
     }
 
+    private void checkTagCombination(OsmPrimitive primitive) {
+        var keySet = new HashSet<>(primitive.keySet());
+        if (primitive instanceof Node) {
+            primitive.keySet().forEach(k -> {
+                if ((k.equals("agv_node_id") && keySet.contains("intermediate_goal_id")) ||
+                        (k.equals("intermediate_goal_id") && keySet.contains("agv_node_id")))
+                    addError(primitive, 6003, "Invalid tag combination agv_node_id & intermediate_goal_id");
+            });
+        } else if (primitive instanceof Way) {
+            if (((Way)primitive).isArea()) {
+            } else {
+                primitive.keySet().forEach(k -> {
+                    if (k.equals("oneway")) {
+                        if (keySet.size() > 2)
+                            addError(primitive, 6003, "Invalid tag combination oneway & other tags");
+                        if (!keySet.contains("line_info"))
+                            addError(primitive, 6003, "Tag oneway needs line_info");
+                    }
+                    if (k.equals("line_info")) {
+                        var value = primitive.get(k);
+                        if (value.equals("agv_pose") && keySet.size() > 1)
+                            addError(primitive, 6003, "Invalid tag combination line_info=agv_pose & other tags");
+                        if (value.equals("goal_pose")) {
+                            if (keySet.size() > 2)
+                                addError(primitive, 6003, "Invalid tag combination line_info=goal_pose & other tags");
+                            if (!keySet.contains("goal_id"))
+                                addError(primitive, 6003, "Tag line_info=goal_pose needs goal_id");
+                        }
+                        if (value.equals("\"\"") && !keySet.contains("oneway"))
+                            addError(primitive, 6003, "Tag line_info=\"\" needs oneway");
+                    }
+                });
+            }
+        }
+    }
+
+    /*
+     * todo: node & way combination
+     * todo: split way
+     */
+
     /**
      * Check for duplicate IDs.
      * @param current the current primitive
