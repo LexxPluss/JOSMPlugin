@@ -39,6 +39,7 @@ public class CustomTagTest extends Test {
         checkNumericTagValue(node);
         checkTagValue(node);
         checkTagCombination(node);
+        checkWayNodeCombination(node);
         var other_nodes = node.getDataSet().getNodes().stream()
                 .filter(n -> n != node)
                 .collect(Collectors.toList());
@@ -52,6 +53,7 @@ public class CustomTagTest extends Test {
         checkNumericTagValue(way);
         checkTagValue(way);
         checkTagCombination(way);
+        checkWayNodeCombination(way);
         checkSplitWay(way);
         var other_ways = way.getDataSet().getWays().stream()
                 .filter(w -> w != way)
@@ -154,6 +156,10 @@ public class CustomTagTest extends Test {
         });
     }
 
+    /**
+     * Check for tag combination.
+     * @param primitive the primitive
+     */
     private void checkTagCombination(OsmPrimitive primitive) {
         var keySet = new HashSet<>(primitive.keySet());
         if (primitive instanceof Node) {
@@ -164,6 +170,10 @@ public class CustomTagTest extends Test {
             });
         } else if (primitive instanceof Way) {
             if (((Way)primitive).isArea()) {
+                primitive.keySet().forEach(k -> {
+                    if (k.equals("area_base")) {
+                    }
+                });
             } else {
                 primitive.keySet().forEach(k -> {
                     if (k.equals("oneway")) {
@@ -190,9 +200,41 @@ public class CustomTagTest extends Test {
         }
     }
 
-    /*
-     * todo: node & way combination
+    /**
+     * Check for way node combination.
+     * @param primitive the primitive
      */
+    private void checkWayNodeCombination(OsmPrimitive primitive) {
+        if (primitive instanceof Node) {
+            var node = (Node)primitive;
+            if (node.get("agv_node_id") != null) {
+                var ways = node.getParentWays();
+                if (ways.size() != 1)
+                    addError(node, 6004, "Node with agv_node_id must be part of 1 way");
+                var value = ways.get(0).get("line_info");
+                if (value == null || !value.equals("agv_pose"))
+                    addError(node, 6004, "Node with agv_node_id must be part of way with line_info=agv_pose");
+            }
+        } else if (primitive instanceof Way) {
+            var way = (Way)primitive;
+            var value = way.get("line_info");
+            if (value != null) {
+                if (value.equals("agv_pose")) {
+                    var nodes = way.getNodes();
+                    if (nodes.size() != 2)
+                        addError(way, 6004, "Way with line_info=agv_pose must have 2 nodes");
+                    var node0 = nodes.get(0);
+                    var node1 = nodes.get(1);
+                    if (node0.get("agv_node_id") == null || node1.get("agv_node_id") == null)
+                        addError(way, 6004, "Way with line_info=agv_pose must have nodes with agv_node_id");
+                } else if (value.equals("goal_pose")) {
+                    var nodes = way.getNodes();
+                    if (nodes.size() != 2)
+                        addError(way, 6004, "Way with line_info=goal_pose must have 2 nodes");
+                }
+            }
+        }
+    }
 
     /**
      * Check for split way.
@@ -204,7 +246,7 @@ public class CustomTagTest extends Test {
             var oneway = way.get("oneway");
             if (oneway != null && (oneway.equals("yes") || oneway.equals("no"))) {
                 if (way.getNodesCount() != 2)
-                    addError(way, 6004, "Way with oneway must split");
+                    addError(way, 6005, "Way with oneway must split");
             }
         }
     }
@@ -223,7 +265,7 @@ public class CustomTagTest extends Test {
                     .filter(v -> v != null)
                     .collect(Collectors.toSet());
             if (values.contains(value))
-                addError(current, 6005, "Duplicate tag:" + key + "=" + value);
+                addError(current, 6006, "Duplicate tag:" + key + "=" + value);
         }
     }
 
