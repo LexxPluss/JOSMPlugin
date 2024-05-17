@@ -209,11 +209,13 @@ public class CustomTagTest extends Test {
             var node = (Node)primitive;
             if (node.get("agv_node_id") != null) {
                 var ways = node.getParentWays();
-                if (ways.size() != 1)
+                if (ways.size() != 1) {
                     addError(node, 6004, "Node with agv_node_id must be part of 1 way");
-                var value = ways.get(0).get("line_info");
-                if (value == null || !value.equals("agv_pose"))
-                    addError(node, 6004, "Node with agv_node_id must be part of way with line_info=agv_pose");
+                } else {
+                    var value = ways.get(0).get("line_info");
+                    if (value == null || !value.equals("agv_pose"))
+                        addError(node, 6004, "Node with agv_node_id must be part of way with line_info=agv_pose");
+                }
             }
         } else if (primitive instanceof Way) {
             var way = (Way)primitive;
