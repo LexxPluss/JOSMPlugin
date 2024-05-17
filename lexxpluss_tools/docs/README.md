@@ -80,6 +80,15 @@ Select an Area that has already been drawn in Draw nodes mode and choose Set Non
 
 When the Validation window is displayed and the Validation button is clicked, a LexxPluss specification tag check is carried out and the results are displayed.
 
+Items checked by the Tag check in the LexxPluss specification include.
+
+1. a Tag that is not used by LexxPluss is set.
+2. a non-numeric value is set for a Tag that requires a numerical value.
+3. wrong Value is set.
+4. wrong Tag combination is set.
+5. wrong combination of Tags for Node and Way
+6. duplicated Tag values (ID)
+
 ![tagchecking](images/10tagchecking.gif)
 
 Validation of the JOSM standard, which is not related to the LexxPluss specification, is also carried out, so it is advisable to uncheck unnecessary items in the Validator settings window. (The last item displayed is the LexxPluss specification Tag check.)
