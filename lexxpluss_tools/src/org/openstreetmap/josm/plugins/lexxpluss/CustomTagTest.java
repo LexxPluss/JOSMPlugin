@@ -27,6 +27,54 @@ import org.openstreetmap.josm.gui.progress.ProgressMonitor;
 public class CustomTagTest extends Test {
 
     /**
+     * Way type.
+     */
+    enum WayType {
+        /**
+         * Unknown way type.
+         */
+        UNKNOWN,
+        /**
+         * AGV pose way type.
+         */
+        AGV_POSE,
+        /**
+         * Goal pose way type.
+         */
+        GOAL_POSE,
+        /**
+         * Oneway way type.
+         */
+        ONEWAY
+    };
+
+    /**
+     * Area type.
+     */
+    enum AreaType {
+        /**
+         * Unknown area type.
+         */
+        UNKNOWN,
+        /**
+         * Non-stop area type.
+         */
+        NON_STOP,
+        /**
+         * Parking area type.
+         */
+        PARK,
+        /**
+         * Safety area type.
+         */
+        SAFETY,
+        /**
+         * Sync area type.
+         */
+        SYNC
+    };
+
+    /**
      * Constructs a new {@code CustomTagTest}.
      */
     public CustomTagTest() {
@@ -161,42 +209,147 @@ public class CustomTagTest extends Test {
      * @param primitive the primitive
      */
     private void checkTagCombination(OsmPrimitive primitive) {
-        var keySet = new HashSet<>(primitive.keySet());
         if (primitive instanceof Node) {
-            primitive.keySet().forEach(k -> {
-                if ((k.equals("agv_node_id") && keySet.contains("intermediate_goal_id")) ||
-                        (k.equals("intermediate_goal_id") && keySet.contains("agv_node_id")))
-                    addError(primitive, 6003, "Invalid tag combination agv_node_id & intermediate_goal_id");
-            });
+            checkNodeTagCombination((Node)primitive);
         } else if (primitive instanceof Way) {
-            if (((Way)primitive).isArea()) {
-                primitive.keySet().forEach(k -> {
-                    if (k.equals("area_base")) {
-                    }
-                });
-            } else {
-                primitive.keySet().forEach(k -> {
-                    if (k.equals("oneway")) {
-                        if (keySet.size() > 2)
-                            addError(primitive, 6003, "Invalid tag combination oneway & other tags");
-                        if (!keySet.contains("line_info"))
-                            addError(primitive, 6003, "Tag oneway needs line_info");
-                    }
-                    if (k.equals("line_info")) {
-                        var value = primitive.get(k);
-                        if (value.equals("agv_pose") && keySet.size() > 1)
-                            addError(primitive, 6003, "Invalid tag combination line_info=agv_pose & other tags");
-                        if (value.equals("goal_pose")) {
-                            if (keySet.size() > 2)
-                                addError(primitive, 6003, "Invalid tag combination line_info=goal_pose & other tags");
-                            if (!keySet.contains("goal_id"))
-                                addError(primitive, 6003, "Tag line_info=goal_pose needs goal_id");
-                        }
-                        if (value.equals("\"\"") && !keySet.contains("oneway"))
-                            addError(primitive, 6003, "Tag line_info=\"\" needs oneway");
-                    }
-                });
+            var way = (Way)primitive;
+            if (way.isArea())
+                checkAreaTagCombination(way);
+            else
+                checkWayTagCombination(way);
+        }
+    }
+
+    /**
+     * Check for node tag combination.
+     * @param node the node
+     */
+    private void checkNodeTagCombination(Node node) {
+        node.keySet().forEach(k -> {
+            if ((k.equals("agv_node_id") && node.hasKey("intermediate_goal_id")) ||
+                    (k.equals("intermediate_goal_id") && node.hasKey("agv_node_id")))
+                addError(node, 6003, "Invalid tag combination agv_node_id & intermediate_goal_id");
+        });
+    }
+
+    /**
+     * Get way type.
+     * @param way the way
+     * @return the way type
+     */
+    private WayType getWayType(Way way) {
+        for (var k : way.keySet()) {
+            if (k.equals("line_info")) {
+                var value = way.get(k);
+                if (value.equals("agv_pose"))
+                    return WayType.AGV_POSE;
+                else if (value.equals("goal_pose"))
+                    return WayType.GOAL_POSE;
+            } else if (k.equals("goal_id")) {
+                return WayType.GOAL_POSE;
+            } else if (k.equals("oneway")) {
+                return WayType.ONEWAY;
             }
+        }
+        return WayType.UNKNOWN;
+    }
+
+    /**
+     * Check for way tag combination.
+     * @param way the way
+     */
+    private void checkWayTagCombination(Way way) {
+        switch (getWayType(way)) {
+        case UNKNOWN:
+            addError(way, 6003, "unknown way");
+            break;
+        case AGV_POSE:
+            if (way.keySet().size() > 1)
+                addError(way, 6003, "Invalid tag combination line_info=agv_pose & other tags");
+            break;
+        case GOAL_POSE:
+            if (way.keySet().size() > 2)
+                addError(way, 6003, "Invalid tag combination line_info=goal_pose & other tags");
+            if (!way.hasKey("line_info") || !way.hasKey("goal_id"))
+                addError(way, 6003, "Incorrect tag combination for goal pose");
+            break;
+        case ONEWAY:
+            if (way.keySet().size() > 2)
+                addError(way, 6003, "Invalid tag combination oneway & other tags");
+            if (!way.hasKey("line_info") || !way.hasKey("oneway"))
+                addError(way, 6003, "Incorrect tag combination for oneway");
+            break;
+        }
+    }
+
+    /**
+     * Get area type.
+     * @param way the way
+     * @return the area type
+     */
+    private AreaType getAreaType(Way way) {
+        for (var k : way.keySet()) {
+            if (k.equals("area_name")) {
+                var value = way.get(k);
+                if (value.equals("no stop"))
+                    return AreaType.NON_STOP;
+                else if (value.startsWith("park"))
+                    return AreaType.PARK;
+                else if (value.equals("warning"))
+                    return AreaType.SAFETY;
+                else if (value.startsWith("sync"))
+                    return AreaType.SYNC;
+            } else if (k.equals("no_stop_area")) {
+                return AreaType.NON_STOP;
+            } else if (k.equals("area_detect") || k.equals("space_id")) {
+                return AreaType.PARK;
+            } else if (k.equals("front_left_safety") || k.equals("front_right_safety") ||
+                    k.equals("side_left_safety") || k.equals("side_right_safety") ||
+                    k.equals("rear_left_safety") || k.equals("rear_right_safety")) {
+                return AreaType.SAFETY;
+            } else if (k.equals("sync_id") || k.equals("area_info")) {
+                return AreaType.SYNC;
+            }
+        }
+        return AreaType.UNKNOWN;
+    }
+
+    /**
+     * Check for area tag combination.
+     * @param way the way
+     */
+    private void checkAreaTagCombination(Way way) {
+        switch (getAreaType(way)) {
+        case UNKNOWN:
+            addError(way, 6003, "unknown area");
+            break;
+        case NON_STOP:
+            if (way.keySet().size() > 3)
+                addError(way, 6003, "Invalid tag combination area_name=no stop & other tags");
+            if (!way.hasKey("area_base") || !way.hasKey("area_name") ||
+                    !way.hasKey("no_stop_area"))
+                addError(way, 6003, "Incorrect tag combination for no stop area");
+            break;
+        case PARK:
+            if (way.keySet().size() > 4)
+                addError(way, 6003, "Invalid tag combination area_name=park & other tags");
+            if (!way.hasKey("area_base") || !way.hasKey("area_name") ||
+                    !way.hasKey("area_detect") || !way.hasKey("space_id"))
+                addError(way, 6003, "Incorrect tag combination for parking area");
+            break;
+        case SAFETY:
+            if (way.keySet().size() > 8)
+                addError(way, 6003, "Invalid tag combination area_name=warning & other tags");
+            if (!way.hasKey("area_base") || !way.hasKey("area_name"))
+                addError(way, 6003, "Incorrect tag combination for safety area");
+            break;
+        case SYNC:
+            if (way.keySet().size() > 4)
+                addError(way, 6003, "Invalid tag combination area_name=sync & other tags");
+            if (!way.hasKey("area_base") || !way.hasKey("area_name") ||
+                    !way.hasKey("sync_id") || !way.hasKey("area_info"))
+                addError(way, 6003, "Incorrect tag combination for sync area");
+            break;
         }
     }
 
@@ -207,7 +360,7 @@ public class CustomTagTest extends Test {
     private void checkWayNodeCombination(OsmPrimitive primitive) {
         if (primitive instanceof Node) {
             var node = (Node)primitive;
-            if (node.get("agv_node_id") != null) {
+            if (node.hasKey("agv_node_id")) {
                 var ways = node.getParentWays();
                 if (ways.size() != 1) {
                     addError(node, 6004, "Node with agv_node_id must be part of 1 way");
@@ -227,7 +380,7 @@ public class CustomTagTest extends Test {
                         addError(way, 6004, "Way with line_info=agv_pose must have 2 nodes");
                     var node0 = nodes.get(0);
                     var node1 = nodes.get(1);
-                    if (node0.get("agv_node_id") == null || node1.get("agv_node_id") == null)
+                    if (!node0.hasKey("agv_node_id") || !node1.hasKey("agv_node_id"))
                         addError(way, 6004, "Way with line_info=agv_pose must have nodes with agv_node_id");
                 } else if (value.equals("goal_pose")) {
                     var nodes = way.getNodes();
