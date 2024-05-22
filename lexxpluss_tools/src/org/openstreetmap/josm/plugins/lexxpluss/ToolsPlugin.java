@@ -9,6 +9,7 @@ package org.openstreetmap.josm.plugins.lexxpluss;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
+import javax.swing.JSeparator;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.Way;
@@ -31,6 +32,9 @@ public class ToolsPlugin extends Plugin {
      */
     public ToolsPlugin(PluginInformation info) {
         super(info);
+        var fileMenu = MainApplication.getMenu().fileMenu;
+        fileMenu.add(new JSeparator(), 0);
+        MainMenu.add(fileMenu, new SftpAction(), false, 0);
         var editMenu = MainApplication.getMenu().editMenu;
         int paste_item_index = -1, duplicate_item_index = -1;
         for (int i = 0; i < editMenu.getItemCount(); ++i) {
