@@ -52,7 +52,7 @@ public class SftpDialog extends ExtendedDialog {
      * Constructs a new {@code SftpDialog}.
      */
     public SftpDialog() {
-        super(MainApplication.getMainFrame(), "Open/Save using sftp", new String[] {"Open", "Save", "Cancel"}, true);
+        super(MainApplication.getMainFrame(), "Open/Save using sftp for LexxPluss", new String[] {"Open", "Save", "Cancel"}, true);
         contentInsets = new Insets(15, 15, 5, 15);
         var panel = new JPanel(new GridBagLayout());
         addLabelled(panel, "Hostname:", hostName);
@@ -67,10 +67,6 @@ public class SftpDialog extends ExtendedDialog {
      * Save settings.
      */
     public void saveSettings() {
-        System.out.println("Host: " + hostName.getText());
-        System.out.println("User: " + userName.getText());
-        System.out.println("Password: " + new String(password.getPassword()));
-        System.out.println("Osm path: " + osmPath.getText());
         ToolsSettings.setHost(hostName.getText());
         ToolsSettings.setUser(userName.getText());
         ToolsSettings.setPassword(new String(password.getPassword()));

@@ -7,6 +7,9 @@
 package org.openstreetmap.josm.plugins.lexxpluss;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.awt.event.ActionEvent;
 import com.jcraft.jsch.ChannelSftp;
@@ -27,7 +30,7 @@ public class SftpAction extends JosmAction {
      * Constructs a new {@code SftpAction}.
      */
     public SftpAction() {
-        super("Open/Save using sftp...", "mapmode/sftpaction", "Open/Save using sftp", null, false);
+        super("Open/Save using sftp... (LexxPluss)", "mapmode/sftpaction", "Open/Save using sftp for LexxPluss", null, false);
     }
 
     @Override
@@ -60,19 +63,22 @@ public class SftpAction extends JosmAction {
             session.setUserInfo(new UserInfoImpl());
             session.connect();
             var channel = (ChannelSftp)session.openChannel("sftp");
-            channel.get(ToolsSettings.getOsmPath(), "/tmp/a.osm", null, ChannelSftp.OVERWRITE);
-            open();
-        } catch (JSchException | SftpException e) {
+            channel.connect();
+            var tmpdir = Paths.get(System.getProperty("java.io.tmpdir"));
+            var path = Files.createTempFile(tmpdir, "lexxpluss_tools", ".osm").toString();
+            channel.get(ToolsSettings.getOsmPath(), path, null, ChannelSftp.OVERWRITE);
+            open(path);
+        } catch (JSchException | SftpException | IOException e) {
             System.err.println("JSchException: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
     /**
      * Opens the downloaded osm file.
+     * @param path the path to the file
      */
-    private void open() {
-        var files = new File[]{new File("/tmp/a.osm")};
+    private void open(String path) {
+        var files = new File[]{new File(path)};
         var task = new OpenFileAction.OpenFileTask(Arrays.asList(files), null);
         MainApplication.worker.submit(task);
     }
@@ -91,7 +97,7 @@ public class SftpAction extends JosmAction {
 
         @Override
         public String getPassphrase() {
-            return "";
+            return ToolsSettings.getPassword();
         }
 
         @Override
@@ -101,17 +107,17 @@ public class SftpAction extends JosmAction {
 
         @Override
         public boolean promptPassword(String s) {
-            return false;
+            return true;
         }
 
         @Override
         public boolean promptPassphrase(String s) {
-            return false;
+            return true;
         }
 
         @Override
         public boolean promptYesNo(String s) {
-            return false;
+            return true;
         }
 
         @Override
