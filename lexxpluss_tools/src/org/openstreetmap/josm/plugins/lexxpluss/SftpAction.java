@@ -8,6 +8,7 @@ package org.openstreetmap.josm.plugins.lexxpluss;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -19,7 +20,11 @@ import com.jcraft.jsch.SftpException;
 import com.jcraft.jsch.UserInfo;
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.actions.OpenFileAction;
+import org.openstreetmap.josm.data.osm.visitor.BoundingXYVisitor;
 import org.openstreetmap.josm.gui.MainApplication;
+import org.openstreetmap.josm.spi.preferences.Config;
+import org.openstreetmap.josm.plugins.piclayer.layer.PicLayerAbstract;
+import org.openstreetmap.josm.plugins.piclayer.layer.PicLayerFromFile;
 
 /**
  * Action for opening/saving using sftp.
@@ -64,23 +69,48 @@ public class SftpAction extends JosmAction {
             session.connect();
             var channel = (ChannelSftp)session.openChannel("sftp");
             channel.connect();
+            var remoteOsmPath = ToolsSettings.getOsmPath();
+            var remoteBasePath = getBasePath(remoteOsmPath);
+            var remotePngPath = remoteBasePath + ".png";
+            var remotePngCalPath = remotePngPath + ".cal";
             var tmpdir = Paths.get(System.getProperty("java.io.tmpdir"));
-            var path = Files.createTempFile(tmpdir, "lexxpluss_tools", ".osm").toString();
-            channel.get(ToolsSettings.getOsmPath(), path, null, ChannelSftp.OVERWRITE);
-            open(path);
-        } catch (JSchException | SftpException | IOException e) {
+            var localOsmPath = Files.createTempFile(tmpdir, "lexxpluss_tools", ".osm").toString();
+            var localBasePath = getBasePath(localOsmPath);
+            var localPngPath = localBasePath + ".png";
+            var localPngCalPath = localPngPath + ".cal";
+            System.out.println("Local base path: " + localBasePath);
+            sftpGet(channel, remoteOsmPath, localOsmPath);
+            sftpGet(channel, remotePngPath, localPngPath);
+            sftpGet(channel, remotePngCalPath, localPngCalPath);
+            var task = new SftpOpenFileTask(localBasePath);
+            MainApplication.worker.submit(task);
+        } catch (JSchException | IOException e) {
             System.err.println("JSchException: " + e.getMessage());
         }
     }
 
     /**
-     * Opens the downloaded osm file.
-     * @param path the path to the file
+     * Returns the base path of the path.
+     * @param path the path
+     * @return the base path
      */
-    private void open(String path) {
-        var files = new File[]{new File(path)};
-        var task = new OpenFileAction.OpenFileTask(Arrays.asList(files), null);
-        MainApplication.worker.submit(task);
+    private String getBasePath(String path) {
+        var index = path.lastIndexOf('.');
+        return index > 0 ? path.substring(0, index) : path;
+    }
+
+    /**
+     * Downloads the file using sftp.
+     * @param channel the channel
+     * @param remotePath the remote path
+     * @param localPath the local path
+     */
+    private void sftpGet(ChannelSftp channel, String remotePath, String localPath) {
+        try {
+            channel.get(remotePath, localPath, null, ChannelSftp.OVERWRITE);
+        } catch (SftpException e) {
+            System.err.println("SftpException: " + e.getMessage());
+        }
     }
 
     /**
@@ -123,6 +153,45 @@ public class SftpAction extends JosmAction {
         @Override
         public void showMessage(String s) {
             System.out.println("Message: " + s);
+        }
+    }
+
+    /**
+     * Open file task for sftp.
+     */
+    private static class SftpOpenFileTask extends OpenFileAction.OpenFileTask {
+
+        /**
+         * The base path.
+         */
+        String basePath = null;
+
+        /**
+         * Constructs a new {@code SftpOpenFileTask}.
+         * @param basePath the base path
+         */
+        public SftpOpenFileTask(String basePath) {
+            super(Arrays.asList(new File[]{new File(basePath + ".osm")}), null);
+            this.basePath = basePath;
+        }
+
+        @Override
+        protected void finish() {
+            super.finish();
+            var newLayerPos = MainApplication.getLayerManager().getLayers().size();
+            for (var l : MainApplication.getLayerManager().getLayersOfType(PicLayerAbstract.class)) {
+                var pos = MainApplication.getLayerManager().getLayers().indexOf(l);
+                if (newLayerPos > pos)
+                    newLayerPos = pos;
+            }
+            var layer = new PicLayerFromFile(new File(basePath + ".png"));
+            try {
+                layer.initialize();
+            } catch (IOException e) {
+                System.err.println("IOException: " + e.getMessage());
+            }
+            MainApplication.getLayerManager().addLayer(layer);
+            MainApplication.getMap().mapView.moveLayer(layer, newLayerPos++);
         }
     }
 }
