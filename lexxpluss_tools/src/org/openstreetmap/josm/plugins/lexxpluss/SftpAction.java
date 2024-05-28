@@ -21,6 +21,7 @@ import com.jcraft.jsch.SftpException;
 import com.jcraft.jsch.UserInfo;
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.actions.OpenFileAction;
+import org.openstreetmap.josm.actions.SaveAction;
 import org.openstreetmap.josm.data.osm.visitor.BoundingXYVisitor;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.spi.preferences.Config;
@@ -59,6 +60,8 @@ public class SftpAction extends JosmAction {
             dialog.saveSettings();
         if (value == 1)
             download();
+        else if (value == 2)
+            upload();
     }
 
     @Override
@@ -97,6 +100,41 @@ public class SftpAction extends JosmAction {
             MainApplication.worker.submit(task);
         } catch (JSchException | IOException e) {
             System.err.println("JSchException: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Uploads the osm file.
+     */
+    private void upload() {
+        var layer = getLayerManager().getActiveLayer();
+        if (layer == null)
+            return;
+        var file = layer.getAssociatedFile();
+        if (file == null)
+            return;
+        var path = file.getAbsolutePath();
+        if (path == null)
+            return;
+        System.out.println("Path: " + path);
+        SaveAction.getInstance().doSave();
+        try {
+            var jsch = new JSch();
+            session = jsch.getSession(
+                    ToolsSettings.getUser(),
+                    ToolsSettings.getHost()
+            );
+            session.setUserInfo(new UserInfoImpl());
+            session.connect();
+            channel = (ChannelSftp)session.openChannel("sftp");
+            channel.connect();
+            channel.put(path, ToolsSettings.getOsmPath(), null, ChannelSftp.OVERWRITE);
+            channel.disconnect();
+            session.disconnect();
+            channel = null;
+            session = null;
+        } catch (JSchException | SftpException e) {
+            System.err.println("JSch/SftpException: " + e.getMessage());
         }
     }
 
