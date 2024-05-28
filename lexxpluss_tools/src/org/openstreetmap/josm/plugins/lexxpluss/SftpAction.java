@@ -16,6 +16,7 @@ import java.awt.event.ActionEvent;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpException;
 import com.jcraft.jsch.UserInfo;
 import org.openstreetmap.josm.actions.JosmAction;
@@ -30,6 +31,16 @@ import org.openstreetmap.josm.plugins.piclayer.layer.PicLayerFromFile;
  * Action for opening/saving using sftp.
  */
 public class SftpAction extends JosmAction {
+
+    /**
+     * The ssh session.
+     */
+    Session session = null;
+
+    /**
+     * The sftp channel.
+     */
+    ChannelSftp channel = null;
 
     /**
      * Constructs a new {@code SftpAction}.
@@ -56,18 +67,18 @@ public class SftpAction extends JosmAction {
     }
 
     /**
-     * Downloads the osm file.
+     * Downloads the osm/png/cal file.
      */
     private void download() {
         try {
             var jsch = new JSch();
-            var session = jsch.getSession(
+            session = jsch.getSession(
                     ToolsSettings.getUser(),
                     ToolsSettings.getHost()
             );
             session.setUserInfo(new UserInfoImpl());
             session.connect();
-            var channel = (ChannelSftp)session.openChannel("sftp");
+            channel = (ChannelSftp)session.openChannel("sftp");
             channel.connect();
             var remoteOsmPath = ToolsSettings.getOsmPath();
             var remoteBasePath = getBasePath(remoteOsmPath);
@@ -159,7 +170,7 @@ public class SftpAction extends JosmAction {
     /**
      * Open file task for sftp.
      */
-    private static class SftpOpenFileTask extends OpenFileAction.OpenFileTask {
+    private class SftpOpenFileTask extends OpenFileAction.OpenFileTask {
 
         /**
          * The base path.
@@ -192,6 +203,14 @@ public class SftpAction extends JosmAction {
             }
             MainApplication.getLayerManager().addLayer(layer);
             MainApplication.getMap().mapView.moveLayer(layer, newLayerPos++);
+            if (channel != null) {
+                channel.disconnect();
+                channel = null;
+            }
+            if (session != null) {
+                session.disconnect();
+                session = null;
+            }
         }
     }
 }
