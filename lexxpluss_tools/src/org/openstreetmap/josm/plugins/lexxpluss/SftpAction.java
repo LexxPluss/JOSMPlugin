@@ -8,11 +8,11 @@ package org.openstreetmap.josm.plugins.lexxpluss;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.awt.event.ActionEvent;
+import javax.swing.Icon;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
@@ -22,26 +22,17 @@ import com.jcraft.jsch.UserInfo;
 import org.openstreetmap.josm.actions.JosmAction;
 import org.openstreetmap.josm.actions.OpenFileAction;
 import org.openstreetmap.josm.actions.SaveAction;
-import org.openstreetmap.josm.data.osm.visitor.BoundingXYVisitor;
 import org.openstreetmap.josm.gui.MainApplication;
-import org.openstreetmap.josm.spi.preferences.Config;
+import org.openstreetmap.josm.gui.Notification;
+import org.openstreetmap.josm.gui.util.GuiHelper;
 import org.openstreetmap.josm.plugins.piclayer.layer.PicLayerAbstract;
 import org.openstreetmap.josm.plugins.piclayer.layer.PicLayerFromFile;
+import org.openstreetmap.josm.tools.ImageProvider;
 
 /**
  * Action for opening/saving using sftp.
  */
 public class SftpAction extends JosmAction {
-
-    /**
-     * The ssh session.
-     */
-    Session session = null;
-
-    /**
-     * The sftp channel.
-     */
-    ChannelSftp channel = null;
 
     /**
      * Constructs a new {@code SftpAction}.
@@ -53,9 +44,8 @@ public class SftpAction extends JosmAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         var dialog = new SftpDialog();
-        dialog.showDialog();
+        dialog.showDialog(checkSaveable());
         var value = dialog.getValue();
-        System.out.println("Value: " + value);
         if (value != 3)
             dialog.saveSettings();
         if (value == 1)
@@ -70,9 +60,28 @@ public class SftpAction extends JosmAction {
     }
 
     /**
+     * Checks if the layer is saveable.
+     * @return true if the layer is saveable
+     */
+    private boolean checkSaveable() {
+        var layer = getLayerManager().getActiveLayer();
+        if (layer == null)
+            return false;
+        var file = layer.getAssociatedFile();
+        if (file == null)
+            return false;
+        var path = file.getAbsolutePath();
+        if (path == null)
+            return false;
+        return layer.isSavable();
+    }
+
+    /**
      * Downloads the osm/png/cal file.
      */
     private void download() {
+        Session session = null;
+        ChannelSftp channel = null;
         try {
             var jsch = new JSch();
             session = jsch.getSession(
@@ -92,7 +101,6 @@ public class SftpAction extends JosmAction {
             var localBasePath = getBasePath(localOsmPath);
             var localPngPath = localBasePath + ".png";
             var localPngCalPath = localPngPath + ".cal";
-            System.out.println("Local base path: " + localBasePath);
             sftpGet(channel, remoteOsmPath, localOsmPath);
             sftpGet(channel, remotePngPath, localPngPath);
             sftpGet(channel, remotePngCalPath, localPngCalPath);
@@ -100,6 +108,16 @@ public class SftpAction extends JosmAction {
             MainApplication.worker.submit(task);
         } catch (JSchException | IOException e) {
             System.err.println("JSchException: " + e.getMessage());
+            notify(ImageProvider.get("download"), "Sftp download failed");
+        } finally {
+            if (channel != null) {
+                channel.disconnect();
+                channel = null;
+            }
+            if (session != null) {
+                session.disconnect();
+                session = null;
+            }
         }
     }
 
@@ -107,17 +125,28 @@ public class SftpAction extends JosmAction {
      * Uploads the osm file.
      */
     private void upload() {
+        var icon = ImageProvider.get("save");
         var layer = getLayerManager().getActiveLayer();
-        if (layer == null)
+        if (layer == null) {
+            notify(icon, "No active layer");
             return;
+        }
         var file = layer.getAssociatedFile();
-        if (file == null)
+        if (file == null) {
+            notify(icon, "No associated file");
             return;
+        }
         var path = file.getAbsolutePath();
-        if (path == null)
+        if (path == null) {
+            notify(icon, "No file path");
             return;
-        System.out.println("Path: " + path);
-        SaveAction.getInstance().doSave();
+        }
+        if (!SaveAction.getInstance().doSave(true)) {
+            notify(icon, "Local save failed");
+            return;
+        }
+        Session session = null;
+        ChannelSftp channel = null;
         try {
             var jsch = new JSch();
             session = jsch.getSession(
@@ -129,13 +158,30 @@ public class SftpAction extends JosmAction {
             channel = (ChannelSftp)session.openChannel("sftp");
             channel.connect();
             channel.put(path, ToolsSettings.getOsmPath(), null, ChannelSftp.OVERWRITE);
-            channel.disconnect();
-            session.disconnect();
-            channel = null;
-            session = null;
+            notify(icon, "Sftp upload successful");
         } catch (JSchException | SftpException e) {
             System.err.println("JSch/SftpException: " + e.getMessage());
+            notify(icon, "Sftp upload failed");
+        } finally {
+            if (channel != null) {
+                channel.disconnect();
+                channel = null;
+            }
+            if (session != null) {
+                session.disconnect();
+                session = null;
+            }
         }
+    }
+
+    /**
+     * Notifies the user.
+     * @param icon the icon
+     * @param message the message
+     */
+    private void notify(Icon icon, String message) {
+        var notification = new Notification(message).setIcon(icon);
+        GuiHelper.runInEDT(notification::show);
     }
 
     /**
@@ -208,7 +254,7 @@ public class SftpAction extends JosmAction {
     /**
      * Open file task for sftp.
      */
-    private class SftpOpenFileTask extends OpenFileAction.OpenFileTask {
+    private static class SftpOpenFileTask extends OpenFileAction.OpenFileTask {
 
         /**
          * The base path.
@@ -227,9 +273,11 @@ public class SftpAction extends JosmAction {
         @Override
         protected void finish() {
             super.finish();
-            var newLayerPos = MainApplication.getLayerManager().getLayers().size();
-            for (var l : MainApplication.getLayerManager().getLayersOfType(PicLayerAbstract.class)) {
-                var pos = MainApplication.getLayerManager().getLayers().indexOf(l);
+            var layerManager = MainApplication.getLayerManager();
+            var layers = layerManager.getLayers();
+            var newLayerPos = layers.size();
+            for (var l : layerManager.getLayersOfType(PicLayerAbstract.class)) {
+                var pos = layers.indexOf(l);
                 if (newLayerPos > pos)
                     newLayerPos = pos;
             }
@@ -239,16 +287,8 @@ public class SftpAction extends JosmAction {
             } catch (IOException e) {
                 System.err.println("IOException: " + e.getMessage());
             }
-            MainApplication.getLayerManager().addLayer(layer);
-            MainApplication.getMap().mapView.moveLayer(layer, newLayerPos++);
-            if (channel != null) {
-                channel.disconnect();
-                channel = null;
-            }
-            if (session != null) {
-                session.disconnect();
-                session = null;
-            }
+            layerManager.addLayer(layer);
+            MainApplication.getMap().mapView.moveLayer(layer, newLayerPos);
         }
     }
 }
