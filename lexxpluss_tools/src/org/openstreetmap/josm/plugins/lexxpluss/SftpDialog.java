@@ -6,7 +6,6 @@
 
 package org.openstreetmap.josm.plugins.lexxpluss;
 
-import static org.openstreetmap.josm.tools.I18n.tr;
 import java.awt.Component;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -61,6 +60,17 @@ public class SftpDialog extends ExtendedDialog {
         addLabelled(panel, "Osm path:", osmPath);
         setContent(panel);
         setDefaultButton(3);
+    }
+
+    /**
+     * Show dialog.
+     * @param savable if true then save button is enabled
+     */
+    public void showDialog(boolean savable) {
+        setupDialog();
+        if (buttons.size() > 1)
+            buttons.get(1).setEnabled(savable);
+        showDialog();
     }
 
     /**
