@@ -35,6 +35,11 @@ import org.openstreetmap.josm.tools.ImageProvider;
 public class SftpAction extends JosmAction {
 
     /**
+     * The local osm path.
+     */
+    String localOsmPath = null;
+
+    /**
      * Constructs a new {@code SftpAction}.
      */
     public SftpAction() {
@@ -73,6 +78,10 @@ public class SftpAction extends JosmAction {
         var path = file.getAbsolutePath();
         if (path == null)
             return false;
+        if (localOsmPath == null)
+            return false;
+        if (!path.equals(localOsmPath))
+            return false;
         return layer.isSavable();
     }
 
@@ -97,7 +106,7 @@ public class SftpAction extends JosmAction {
             var remotePngPath = remoteBasePath + ".png";
             var remotePngCalPath = remotePngPath + ".cal";
             var tmpdir = Paths.get(System.getProperty("java.io.tmpdir"));
-            var localOsmPath = Files.createTempFile(tmpdir, "lexxpluss_tools", ".osm").toString();
+            localOsmPath = Files.createTempFile(tmpdir, "lexxpluss_tools", ".osm").toString();
             var localBasePath = getBasePath(localOsmPath);
             var localPngPath = localBasePath + ".png";
             var localPngCalPath = localPngPath + ".cal";
@@ -139,6 +148,14 @@ public class SftpAction extends JosmAction {
         var path = file.getAbsolutePath();
         if (path == null) {
             notify(icon, "No file path");
+            return;
+        }
+        if (localOsmPath == null) {
+            notify(icon, "No local osm path");
+            return;
+        }
+        if (!path.equals(localOsmPath)) {
+            notify(icon, "Local osm path mismatch");
             return;
         }
         if (!SaveAction.getInstance().doSave(true)) {
