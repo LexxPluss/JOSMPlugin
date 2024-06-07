@@ -342,7 +342,7 @@ public class CustomTagTest extends Test {
                 addError(way, 6003, "Incorrect tag combination for parking area");
             break;
         case SAFETY:
-            if (way.keySet().size() > 8)
+            if (way.keySet().size() > 10)
                 addError(way, 6003, "Invalid tag combination area_name=warning & other tags");
             if (!way.hasKey("area_base") || !way.hasKey("area_name"))
                 addError(way, 6003, "Incorrect tag combination for safety area");
