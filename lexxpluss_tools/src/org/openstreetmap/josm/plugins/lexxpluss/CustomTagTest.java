@@ -185,10 +185,12 @@ public class CustomTagTest extends Test {
                 Map.entry("area_info",          Set.of("sync_area")),
                 Map.entry("area_base",          Set.of("movable")),
                 Map.entry("no_stop_area",       Set.of("true")),
+                Map.entry("front_safety",       Set.of("off")),
                 Map.entry("front_left_safety",  Set.of("off")),
                 Map.entry("front_right_safety", Set.of("off")),
                 Map.entry("side_left_safety",   Set.of("off")),
                 Map.entry("side_right_safety",  Set.of("off")),
+                Map.entry("rear_safety",        Set.of("off")),
                 Map.entry("rear_left_safety",   Set.of("off")),
                 Map.entry("rear_right_safety",  Set.of("off")));
         primitive.keySet().forEach(k -> {
