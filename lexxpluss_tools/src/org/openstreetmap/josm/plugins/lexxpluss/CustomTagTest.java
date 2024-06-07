@@ -122,9 +122,10 @@ public class CustomTagTest extends Test {
             if (((Way)primitive).isArea()) {
                 validTags = Set.of("space_id", "sync_id",
                         "area_base", "area_detect", "area_info", "area_name", "no_stop_area",
-                        "front_left_safety", "front_right_safety",
+                        "front_safety",  "front_left_safety", "front_right_safety",
                         "side_left_safety", "side_right_safety",
-                        "rear_left_safety", "rear_right_safety");
+                        "rear_safety", "rear_left_safety", "rear_right_safety",
+                        "use_scan_hi");
             } else {
                 validTags = Set.of("goal_id", "line_info", "oneway");
             }
