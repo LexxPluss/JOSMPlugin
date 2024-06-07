@@ -127,7 +127,8 @@ public class CustomTagTest extends Test {
                         "rear_safety", "rear_left_safety", "rear_right_safety",
                         "use_scan_hi");
             } else {
-                validTags = Set.of("goal_id", "line_info", "oneway");
+                validTags = Set.of("goal_id", "line_info", "oneway",
+                                                "agv_line_end_offset", "agv_line_start_offset");
             }
         }
         for (var key : primitive.keySet()) {
