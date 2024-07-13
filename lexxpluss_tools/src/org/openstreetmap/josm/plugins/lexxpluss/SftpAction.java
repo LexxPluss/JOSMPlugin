@@ -93,6 +93,8 @@ public class SftpAction extends JosmAction {
         ChannelSftp channel = null;
         try {
             var jsch = new JSch();
+            if (ToolsSettings.getUseIdentity())
+                jsch.addIdentity(ToolsSettings.getIdentityPath());
             session = jsch.getSession(
                     ToolsSettings.getUser(),
                     ToolsSettings.getHost()
