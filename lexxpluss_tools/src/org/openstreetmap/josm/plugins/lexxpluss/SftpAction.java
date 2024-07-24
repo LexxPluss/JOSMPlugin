@@ -112,13 +112,13 @@ public class SftpAction extends JosmAction {
             var localBasePath = getBasePath(localOsmPath);
             var localPngPath = localBasePath + ".png";
             var localPngCalPath = localPngPath + ".cal";
-            sftpGet(channel, remoteOsmPath, localOsmPath);
-            sftpGet(channel, remotePngPath, localPngPath);
-            sftpGet(channel, remotePngCalPath, localPngCalPath);
+            channel.get(remoteOsmPath, localOsmPath, null, ChannelSftp.OVERWRITE);
+            channel.get(remotePngPath, localPngPath, null, ChannelSftp.OVERWRITE);
+            channel.get(remotePngCalPath, localPngCalPath, null, ChannelSftp.OVERWRITE);
             var task = new SftpOpenFileTask(localBasePath);
             MainApplication.worker.submit(task);
-        } catch (JSchException | IOException e) {
-            System.err.println("JSchException: " + e.getMessage());
+        } catch (JSchException | SftpException | IOException e) {
+            System.err.println("Exception: " + e.getMessage());
             notify(ImageProvider.get("download"), "Sftp download failed");
         } finally {
             if (channel != null) {
@@ -211,20 +211,6 @@ public class SftpAction extends JosmAction {
     private String getBasePath(String path) {
         var index = path.lastIndexOf('.');
         return index > 0 ? path.substring(0, index) : path;
-    }
-
-    /**
-     * Downloads the file using sftp.
-     * @param channel the channel
-     * @param remotePath the remote path
-     * @param localPath the local path
-     */
-    private void sftpGet(ChannelSftp channel, String remotePath, String localPath) {
-        try {
-            channel.get(remotePath, localPath, null, ChannelSftp.OVERWRITE);
-        } catch (SftpException e) {
-            System.err.println("SftpException: " + e.getMessage());
-        }
     }
 
     /**
