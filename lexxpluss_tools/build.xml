@@ -15,7 +15,7 @@
     <property name="plugin.icon" value="images/mapmode/lexxpluss_tools.png"/>
     <property name="plugin.link" value="https://wiki.openstreetmap.org/wiki/JOSM/Plugins/lexxpluss_tools"/>
     <property name="plugin.requires" value="PicLayer"/>
-    <property name="class.path" value="lib/jsch-0.1.55.jar"/>
+    <property name="class.path" value="lib/jsch-0.2.18.jar"/>
     <import file="../build-common.xml"/>
     <fileset id="plugin.requires.jars" dir="${plugin.dist.dir}">
         <include name="PicLayer.jar"/>

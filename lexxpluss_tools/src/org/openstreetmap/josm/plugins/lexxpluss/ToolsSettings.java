@@ -73,6 +73,38 @@ public class ToolsSettings {
     }
 
     /**
+     * Get the use identity flag.
+     * @return the use identity flag
+     */
+    public static boolean getUseIdentity() {
+        return Config.getPref().getBoolean(prefix + "useIdentity", false);
+    }
+
+    /**
+     * Set the use identity flag.
+     * @param useIdentity the use identity flag
+     */
+    public static void setUseIdentity(boolean useIdentity) {
+        Config.getPref().putBoolean(prefix + "useIdentity", useIdentity);
+    }
+
+    /**
+     * Get the identity path.
+     * @return the identity path
+     */
+    public static String getIdentityPath() {
+        return Config.getPref().get(prefix + "identityPath", "");
+    }
+
+    /**
+     * Set the identity path.
+     * @param identityPath the identity path
+     */
+    public static void setIdentityPath(String identityPath) {
+        Config.getPref().put(prefix + "identityPath", identityPath);
+    }
+
+    /**
      * Get the OSM path.
      * @return the OSM path
      */

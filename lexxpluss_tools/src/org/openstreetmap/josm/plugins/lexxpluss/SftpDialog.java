@@ -9,6 +9,10 @@ package org.openstreetmap.josm.plugins.lexxpluss;
 import java.awt.Component;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ItemEvent;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
@@ -43,6 +47,16 @@ public class SftpDialog extends ExtendedDialog {
     private JPasswordField password = new JPasswordField(ToolsSettings.getPassword());
 
     /**
+     * Use identity checkbox.
+     */
+    private JCheckBox useIdentity = new JCheckBox("Use identity", ToolsSettings.getUseIdentity());
+
+    /**
+     * Identity path field.
+     */
+    private JTextField identityPath = new JTextField(null, ToolsSettings.getIdentityPath(), columns);
+
+    /**
      * Osm path field.
      */
     private JTextField osmPath = new JTextField(null, ToolsSettings.getOsmPath(), columns);
@@ -57,6 +71,7 @@ public class SftpDialog extends ExtendedDialog {
         addLabelled(panel, "Hostname:", hostName);
         addLabelled(panel, "Username:", userName);
         addLabelled(panel, "Password:", password);
+        addIdentityUI(panel);
         addLabelled(panel, "Osm path:", osmPath);
         setContent(panel);
         setDefaultButton(3);
@@ -80,6 +95,8 @@ public class SftpDialog extends ExtendedDialog {
         ToolsSettings.setHost(hostName.getText());
         ToolsSettings.setUser(userName.getText());
         ToolsSettings.setPassword(new String(password.getPassword()));
+        ToolsSettings.setUseIdentity(useIdentity.isSelected());
+        ToolsSettings.setIdentityPath(identityPath.getText());
         ToolsSettings.setOsmPath(osmPath.getText());
     }
 
@@ -94,5 +111,32 @@ public class SftpDialog extends ExtendedDialog {
         panel.add(label, GBC.std());
         label.setLabelFor(c);
         panel.add(c, GBC.eol().fill(GBC.HORIZONTAL));
+    }
+
+    /**
+     * Add identity UI.
+     * @param panel panel
+     */
+    private void addIdentityUI(JPanel panel) {
+        panel.add(useIdentity, GBC.std());
+        panel.add(identityPath, GBC.std());
+        var button = new JButton("Select...");
+        panel.add(button, GBC.eol().fill(GBC.HORIZONTAL));
+        useIdentity.addItemListener(e -> {
+            var selected = e.getStateChange() == ItemEvent.SELECTED;
+            identityPath.setEnabled(selected);
+            button.setEnabled(selected);
+        });
+        var selected = useIdentity.isSelected();
+        identityPath.setEnabled(selected);
+        button.setEnabled(selected);
+        button.addActionListener(e -> {
+            var chooser = new JFileChooser();
+            chooser.setFileHidingEnabled(false);
+            chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            var ret = chooser.showOpenDialog(this);
+            if (ret == JFileChooser.APPROVE_OPTION)
+                identityPath.setText(chooser.getSelectedFile().getAbsolutePath());
+        });
     }
 }
