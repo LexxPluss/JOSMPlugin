@@ -66,6 +66,8 @@ public class ToolsPlugin extends Plugin {
         MainMenu.add(moreMenu, new SyncAreaAction());
         MainMenu.add(moreMenu, new SafetyAreaAction());
         MainMenu.add(moreMenu, new NonStopAreaAction());
+        MainMenu.add(moreMenu, new CSVAMRGoalCaptureAction());
+        MainMenu.add(moreMenu, new CSVPGVTapeCaptureAction());
         OsmValidator.addTest(CustomTagTest.class);
     }
 
