@@ -152,9 +152,6 @@ public class CustomTagTest extends Test {
             String intValue = null;
             if (intTags.contains(k)) {
                 intValue = value;
-            } else if (k.equals("area_name") &&
-                    (value.startsWith("park") || value.startsWith("sync"))) {
-                intValue = value.substring(4);
             }
             if (intValue != null) {
                 try {
@@ -197,14 +194,6 @@ public class CustomTagTest extends Test {
             var valueSet = tagMap.get(k);
             if (valueSet != null && !valueSet.contains(primitive.get(k)))
                 addError(primitive, 6002, "Invalid tag value:" + k + "=" + primitive.get(k));
-            if (k.equals("area_name")) {
-                var value = primitive.get(k);
-                if (value != null) {
-                    if (!value.equals("warning") && !value.equals("no stop") &&
-                            !value.startsWith("park") && !value.startsWith("sync"))
-                        addError(primitive, 6002, "Invalid tag value:" + k + "=" + value);
-                }
-            }
         });
     }
 
