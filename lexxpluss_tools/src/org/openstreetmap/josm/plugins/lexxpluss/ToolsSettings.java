@@ -93,7 +93,7 @@ public class ToolsSettings {
      * @return the flag for auto setting node coordinates
      */
     public static boolean getUseAutoNodeCoords() {
-        return Config.getPref().getBoolean(prefix + "useAutoNodeCoords", false);
+        return Config.getPref().getBoolean(prefix + "useAutoNodeCoords", true);
     }
 
     /**
