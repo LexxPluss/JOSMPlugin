@@ -54,7 +54,7 @@ public class SftpDialog extends ExtendedDialog {
     /**
      * Use auto node setting checkbox.
      */
-    private JCheckBox useAutoNodeCoords = new JCheckBox("Use identity", ToolsSettings.getUseAutoNodeCoords());
+    private JCheckBox useAutoNodeCoords = new JCheckBox("Set the node coordinates automatically", ToolsSettings.getUseAutoNodeCoords());
 
     /**
      * Identity path field.
