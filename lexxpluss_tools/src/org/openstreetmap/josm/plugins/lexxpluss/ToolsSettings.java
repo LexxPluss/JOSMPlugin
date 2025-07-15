@@ -89,6 +89,22 @@ public class ToolsSettings {
     }
 
     /**
+     * Get the flag for whether Node X_image/Y_image are automatically set or not.
+     * @return the flag for auto setting node coordinates
+     */
+    public static boolean getUseAutoNodeCoords() {
+        return Config.getPref().getBoolean(prefix + "useAutoNodeCoords", false);
+    }
+
+    /**
+     * Set the flag for whether Node X_image/Y_image are automatically set or not.
+     * @param useAutoNodeCoords the flag for auto setting node coordinates
+     */
+    public static void setUseAutoNodeCoords(boolean useAutoNodeCoords) {
+        Config.getPref().putBoolean(prefix + "useAutoNodeCoords", useAutoNodeCoords);
+    }
+
+    /**
      * Get the identity path.
      * @return the identity path
      */
