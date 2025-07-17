@@ -29,9 +29,9 @@ import org.openstreetmap.josm.gui.layer.Layer;
 import org.openstreetmap.josm.gui.layer.OsmDataLayer;
 import org.openstreetmap.josm.gui.MapFrame;
 import org.openstreetmap.josm.gui.MapView;
-import org.openstreetmap.josm.plugins.lexxpluss.ToolsSettings;
 import org.openstreetmap.josm.plugins.piclayer.layer.PicLayerAbstract;
 import org.openstreetmap.josm.plugins.piclayer.transform.PictureTransform;
+import org.openstreetmap.josm.spi.preferences.Config;
 import org.openstreetmap.josm.tools.Logging;
 
 /**
@@ -56,7 +56,7 @@ public class LexxPlussExporter extends OsmExporter {
         // record info in this tag to save for re-transform
         TagMap tags = new TagMap();
         tags.put("transform matrix","");
-    	
+
         Image image = null;
         AffineTransform transform = null;   // 画像の表示位置変換アフィン行列
         EastNorth imagePosition = null;     // en単位での画像中央位置
@@ -217,7 +217,8 @@ public class LexxPlussExporter extends OsmExporter {
                 //System.out.println("Dst4 =(" + x + "," + y + ")");
                 // 変換した座標をタグにセット
                 // System.out.println("Update Keys=" + node.getNumKeys());
-                if (ToolsSettings.getUseAutoNodeCoords()) {
+                // Changed for IOP-1976
+                if (Config.getPref().getBoolean("plugin.lexxpluss_tools.useAutoNodeCoords", true)) {
                     node.put("X_image", String.valueOf(x));
                     node.put("Y_image", String.valueOf(y));
                     // System.out.println("Node Keys=" + node.getNumKeys());
