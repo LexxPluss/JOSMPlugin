@@ -107,9 +107,6 @@ public class CoordChangeListenerPlugin implements DataSetListener {
     }
 
     private void onNodeTagChanged(Node node, Map<String, String> originalTags, Map<String, String> newTags, String tagThatHasChanged) {
-        // Logging.info("Node " + node.getId() + " tag changed: " + key + " = " + oldValue + " -> " + newValue);
-
-        // Example actions based on specific tags
         if ("X_image".equals(tagThatHasChanged)) {
             moveNodeToCustomCoordinates(node, Double.parseDouble(newTags.get(tagThatHasChanged)), Double.parseDouble(newTags.get("Y_image")));
         } else if ("Y_image".equals(tagThatHasChanged)) {
@@ -118,9 +115,7 @@ public class CoordChangeListenerPlugin implements DataSetListener {
     }
 
     private void moveNodeToCustomCoordinates(Node node, double customX, double customY) {
-
         // Reverse the transformation steps in opposite order
-
         final MapFrame mf = MainApplication.getMap();
         MapView mv = mf.mapView;
         Image image = null;
