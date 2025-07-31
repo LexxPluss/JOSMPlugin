@@ -129,7 +129,7 @@ public class CoordChangeListenerPlugin implements DataSetListener {
 
         List<Layer> layers = MainApplication.getLayerManager().getVisibleLayersInZOrder();
         double pic_offset_x = 0, pic_offset_y = 0;
-        for(Layer _layer : layers) {
+        for (Layer _layer : layers) {
             if (_layer instanceof PicLayerAbstract) {
                 picLayer = (PicLayerAbstract)_layer;
                 image = picLayer.getImage();
