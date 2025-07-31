@@ -16,7 +16,12 @@ import java.util.Map;
 import java.awt.geom.NoninvertibleTransformException;
 import java.util.logging.Level;
 
+import javax.swing.SwingUtilities;
+
+import org.openstreetmap.josm.command.MoveCommand;
+import org.openstreetmap.josm.data.UndoRedoHandler;
 import org.openstreetmap.josm.data.coor.EastNorth;
+import org.openstreetmap.josm.data.coor.LatLon;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.OsmPrimitive;
 import org.openstreetmap.josm.data.osm.event.AbstractDatasetChangedEvent;
@@ -28,6 +33,8 @@ import org.openstreetmap.josm.data.osm.event.PrimitivesRemovedEvent;
 import org.openstreetmap.josm.data.osm.event.RelationMembersChangedEvent;
 import org.openstreetmap.josm.data.osm.event.TagsChangedEvent;
 import org.openstreetmap.josm.data.osm.event.WayNodesChangedEvent;
+import org.openstreetmap.josm.data.projection.Projection;
+import org.openstreetmap.josm.data.projection.ProjectionRegistry;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.MapFrame;
 import org.openstreetmap.josm.gui.MapView;
@@ -42,12 +49,14 @@ import org.openstreetmap.josm.tools.Logging;
  */
 public class CoordChangeListenerPlugin implements DataSetListener {
 
+    OsmDataLayer currentLayer;
+    LatLon finalLatLon;
+
     /**
      * Constructs a new {@code CoordChangeListenerPlugin}.
      */
     public CoordChangeListenerPlugin() {
         super();
-        System.out.println("CoordChangeListenerPlugin init");
         MainApplication.getLayerManager().addActiveLayerChangeListener(e -> {
             OsmDataLayer newLayer = MainApplication.getLayerManager().getEditLayer();
             if (newLayer != null) {
@@ -64,10 +73,14 @@ public class CoordChangeListenerPlugin implements DataSetListener {
     @Override
     public void tagsChanged(TagsChangedEvent event) {
         for (OsmPrimitive primitive : event.getPrimitives()) {
-            if (primitive instanceof Node) {
-                Node node = (Node) primitive;
-                handleNodeTagChange(node, event);
+            if (!(primitive instanceof Node)) {
+                continue;
             }
+            Node node = (Node) primitive;
+            handleNodeTagChange(node, event);
+            SwingUtilities.invokeLater(() -> {
+                performCoordinateUpdate(node);
+            });
         }
     }
 
@@ -189,8 +202,15 @@ public class CoordChangeListenerPlugin implements DataSetListener {
         double east = (mapPt[0] / pixel_per_en_x) + center.east();
         double north = center.north() - (mapPt[1] / pixel_per_en_y);
 
-        System.out.println("Set coords: " + Double.toString(east) + " " + Double.toString(north));
-       node.setEastNorth(new EastNorth(east, north));
+        Projection projection = ProjectionRegistry.getProjection();
+
+        // Convert to LatLon
+        this.finalLatLon = projection.eastNorth2latlon(new EastNorth(east, north));
+    }
+
+    private void performCoordinateUpdate(Node node) {
+        System.out.println("Node shall be moved to map coords: " + Double.toString(finalLatLon.getX()) + ", " + Double.toString(finalLatLon.getY()));
+        UndoRedoHandler.getInstance().add(new MoveCommand(node, this.finalLatLon));
     }
 
     /**
