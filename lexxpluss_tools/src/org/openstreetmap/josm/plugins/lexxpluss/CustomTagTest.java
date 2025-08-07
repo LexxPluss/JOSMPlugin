@@ -79,7 +79,11 @@ public class CustomTagTest extends Test {
         /**
          * Sync area type.
          */
-        SYNC
+        SYNC,
+        /**
+         * Oneway area type.
+         */
+        ONEWAY
     };
 
     /**
@@ -141,6 +145,7 @@ public class CustomTagTest extends Test {
                         "front_right_safety",
                         "front_safety",
                         "non_stop_area",
+                        "oneway",
                         "rear_left_safety",
                         "rear_right_safety",
                         "rear_safety",
@@ -339,6 +344,8 @@ public class CustomTagTest extends Test {
                 return AreaType.SAFETY;
             } else if (k.equals("sync_id") || k.equals("area_info")) {
                 return AreaType.SYNC;
+            } else if (k.equals("oneway")) {
+                return AreaType.ONEWAY;
             }
         }
         if (way.hasKey("area_base") && way.get("area_base").equals("movable"))
@@ -383,6 +390,12 @@ public class CustomTagTest extends Test {
             if (!way.hasKey("area_base") || !way.hasKey("area_name") ||
                     !way.hasKey("sync_id") || !way.hasKey("area_info"))
                 addError(way, 6003, "Incorrect tag combination for sync area");
+            break;
+        case ONEWAY:
+            if (way.keySet().size() > 2)
+                addError(way, 6003, "Incorrect tag number for oneway area");
+            if (!way.hasKey("area_base") || !way.hasKey("oneway"))
+                addError(way, 6003, "Incorrect tag combination for oneway area");
             break;
         }
     }
