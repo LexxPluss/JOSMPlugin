@@ -281,17 +281,17 @@ public class CustomTagTest extends Test {
             break;
         case AGV_POSE:
             if (way.keySet().size() > 1)
-                addError(way, 6003, "Invalid tag combination line_info=agv_pose & other tags");
+                addError(way, 6003, "Incorrect tag number for agv pose");
             break;
         case GOAL_POSE:
             if (way.keySet().size() > 2)
-                addError(way, 6003, "Invalid tag combination line_info=goal_pose & other tags");
+                addError(way, 6003, "Incorrect tag number for goal pose");
             if (!way.hasKey("line_info") || !way.hasKey("goal_id"))
                 addError(way, 6003, "Incorrect tag combination for goal pose");
             break;
         case ONEWAY:
             if (way.keySet().size() > 2)
-                addError(way, 6003, "Invalid tag combination oneway & other tags");
+                addError(way, 6003, "Incorrect tag number for oneway");
             if (!way.hasKey("line_info") || !way.hasKey("oneway"))
                 addError(way, 6003, "Incorrect tag combination for oneway");
             break;
@@ -341,27 +341,27 @@ public class CustomTagTest extends Test {
             break;
         case NON_STOP:
             if (way.keySet().size() > 3)
-                addError(way, 6003, "Invalid tag combination area_name=no stop & other tags");
+                addError(way, 6003, "Incorrect tag number for no stop area");
             if (!way.hasKey("area_base") || !way.hasKey("area_name") ||
                     !way.hasKey("no_stop_area"))
                 addError(way, 6003, "Incorrect tag combination for no stop area");
             break;
         case PARK:
             if (way.keySet().size() > 4)
-                addError(way, 6003, "Invalid tag combination area_name=park & other tags");
+                addError(way, 6003, "Incorrect tag number for parking area");
             if (!way.hasKey("area_base") || !way.hasKey("area_name") ||
                     !way.hasKey("area_detect") || !way.hasKey("space_id"))
                 addError(way, 6003, "Incorrect tag combination for parking area");
             break;
         case SAFETY:
             if (way.keySet().size() > 10)
-                addError(way, 6003, "Invalid tag combination area_name=warning & other tags");
+                addError(way, 6003, "Incorrect tag number for safety area");
             if (!way.hasKey("area_base") || !way.hasKey("area_name"))
                 addError(way, 6003, "Incorrect tag combination for safety area");
             break;
         case SYNC:
             if (way.keySet().size() > 4)
-                addError(way, 6003, "Invalid tag combination area_name=sync & other tags");
+                addError(way, 6003, "Incorrect tag number for sync area");
             if (!way.hasKey("area_base") || !way.hasKey("area_name") ||
                     !way.hasKey("sync_id") || !way.hasKey("area_info"))
                 addError(way, 6003, "Incorrect tag combination for sync area");
