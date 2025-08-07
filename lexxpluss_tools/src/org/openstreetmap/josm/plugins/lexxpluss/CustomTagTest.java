@@ -201,7 +201,7 @@ public class CustomTagTest extends Test {
     private void checkTagValue(OsmPrimitive primitive) {
         var tagMap = Map.ofEntries(
                 Map.entry("line_info",          Set.of("agv_pose", "goal_pose", "\"\"")),
-                Map.entry("one_way",            Set.of("yes", "no")),
+                Map.entry("oneway",             Set.of("yes", "no")),
                 Map.entry("area_info",          Set.of("sync_area")),
                 Map.entry("area_base",          Set.of("movable")),
                 Map.entry("non_stop_area",      Set.of("true")),
