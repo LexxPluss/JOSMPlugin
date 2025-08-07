@@ -122,7 +122,7 @@ public class CustomTagTest extends Test {
         var other_ways = way.getDataSet().getWays().stream()
                 .filter(w -> w != way)
                 .collect(Collectors.toList());
-        Arrays.asList("area_name", "goal_id", "marker_group_id", "space_id", "sync_id")
+        Arrays.asList("area_detect", "area_name", "goal_id", "marker_group_id", "space_id", "sync_id")
                 .forEach(key -> checkDuplicateTagValue(way, key, other_ways));
     }
 
