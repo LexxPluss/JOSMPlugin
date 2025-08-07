@@ -57,6 +57,10 @@ public class CustomTagTest extends Test {
          */
         UNKNOWN,
         /**
+         * Movable area type.
+         */
+        MOVABLE,
+        /**
          * Non-stop area type.
          */
         NON_STOP,
@@ -327,6 +331,8 @@ public class CustomTagTest extends Test {
                 return AreaType.SYNC;
             }
         }
+        if (way.hasKey("area_base") && way.get("area_base").equals("movable"))
+            return AreaType.MOVABLE;
         return AreaType.UNKNOWN;
     }
 
@@ -338,6 +344,8 @@ public class CustomTagTest extends Test {
         switch (getAreaType(way)) {
         case UNKNOWN:
             addError(way, 6003, "unknown area");
+            break;
+        case MOVABLE:
             break;
         case NON_STOP:
             if (way.keySet().size() > 3)
