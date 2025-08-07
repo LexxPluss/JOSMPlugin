@@ -315,7 +315,7 @@ public class CustomTagTest extends Test {
                     return AreaType.NON_STOP;
                 else if (value.startsWith("park"))
                     return AreaType.PARK;
-                else if (value.equals("warning"))
+                else if (value.startsWith("warning"))
                     return AreaType.SAFETY;
                 else if (value.startsWith("sync"))
                     return AreaType.SYNC;
