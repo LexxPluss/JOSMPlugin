@@ -106,7 +106,7 @@ public class CustomTagTest extends Test {
         var other_ways = way.getDataSet().getWays().stream()
                 .filter(w -> w != way)
                 .collect(Collectors.toList());
-        Arrays.asList("goal_id", "space_id", "sync_id", "area_name")
+        Arrays.asList("area_name", "goal_id", "space_id", "sync_id")
                 .forEach(key -> checkDuplicateTagValue(way, key, other_ways));
     }
 
@@ -117,18 +117,37 @@ public class CustomTagTest extends Test {
     private void checkInvalidTag(OsmPrimitive primitive) {
         Set<String> validTags = null;
         if (primitive instanceof Node) {
-            validTags = Set.of("agv_node_id", "intermediate_goal_id", "X_image", "Y_image");
+            validTags = Set.of(
+                    "agv_node_id",
+                    "intermediate_goal_id",
+                    "X_image",
+                    "Y_image");
         } else if (primitive instanceof Way) {
             if (((Way)primitive).isArea()) {
-                validTags = Set.of("space_id", "sync_id",
-                        "area_base", "area_detect", "area_info", "area_name", "no_stop_area",
-                        "front_safety",  "front_left_safety", "front_right_safety",
-                        "side_left_safety", "side_right_safety",
-                        "rear_safety", "rear_left_safety", "rear_right_safety",
+                validTags = Set.of(
+                        "area_base",
+                        "area_detect",
+                        "area_info",
+                        "area_name",
+                        "front_left_safety",
+                        "front_right_safety",
+                        "front_safety",
+                        "no_stop_area",
+                        "rear_left_safety",
+                        "rear_right_safety",
+                        "rear_safety",
+                        "side_left_safety",
+                        "side_right_safety",
+                        "space_id",
+                        "sync_id",
                         "use_scan_hi");
             } else {
-                validTags = Set.of("goal_id", "line_info", "oneway",
-                                                "agv_line_end_offset", "agv_line_start_offset");
+                validTags = Set.of(
+                        "agv_line_end_offset",
+                        "agv_line_start_offset",
+                        "goal_id",
+                        "line_info",
+                        "oneway");
             }
         }
         for (var key : primitive.keySet()) {
@@ -143,10 +162,14 @@ public class CustomTagTest extends Test {
      */
     private void checkNumericTagValue(OsmPrimitive primitive) {
         var intTags = Set.of(
-                "agv_node_id", "goal_id",
-                "space_id", "sync_id",
-                "intermediate_goal_id");
-        var doubleTags = Set.of("X_image", "Y_image");
+                "agv_node_id",
+                "goal_id",
+                "intermediate_goal_id",
+                "space_id",
+                "sync_id");
+        var doubleTags = Set.of(
+                "X_image",
+                "Y_image");
         primitive.keySet().forEach(k -> {
             var value = primitive.get(k);
             String intValue = null;
