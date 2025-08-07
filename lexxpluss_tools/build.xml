@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- Copyright (c) 2024, LexxPluss Inc.
+ Copyright (c) 2024-2025, LexxPluss Inc.
  All rights reserved.
 -->
 <project name="lexxpluss_tools" default="dist" basedir=".">

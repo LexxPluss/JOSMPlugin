@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2024, LexxPluss Inc.
+ * Copyright (c) 2024-2025, LexxPluss Inc.
  * All rights reserved.
  * License: GPL. For details, see LICENSE file.
  */
