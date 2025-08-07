@@ -329,10 +329,16 @@ public class CustomTagTest extends Test {
                 addError(way, 6003, "Incorrect tag combination for marker pose");
             break;
         case ONEWAY:
-            if (way.keySet().size() > 2)
+            var keys = way.keySet().size();
+            if (keys > 2) {
                 addError(way, 6003, "Incorrect tag number for oneway");
-            if (!way.hasKey("line_info") || !way.hasKey("oneway"))
-                addError(way, 6003, "Incorrect tag combination for oneway");
+            } else if (keys == 1) {
+                if (!way.hasKey("oneway"))
+                    addError(way, 6003, "Incorrect tag combination for oneway");
+            } else if (keys == 2) {
+                if (!way.hasKey("line_info") || !way.hasKey("oneway"))
+                    addError(way, 6003, "Incorrect tag combination for oneway");
+            }
             break;
         case ONEWAY_DIR:
             if (way.keySet().size() > 1)
