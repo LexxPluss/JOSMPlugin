@@ -132,7 +132,7 @@ public class CustomTagTest extends Test {
                         "front_left_safety",
                         "front_right_safety",
                         "front_safety",
-                        "no_stop_area",
+                        "non_stop_area",
                         "rear_left_safety",
                         "rear_right_safety",
                         "rear_safety",
@@ -204,7 +204,7 @@ public class CustomTagTest extends Test {
                 Map.entry("one_way",            Set.of("yes", "no")),
                 Map.entry("area_info",          Set.of("sync_area")),
                 Map.entry("area_base",          Set.of("movable")),
-                Map.entry("no_stop_area",       Set.of("true")),
+                Map.entry("non_stop_area",      Set.of("true")),
                 Map.entry("front_safety",       Set.of("off")),
                 Map.entry("front_left_safety",  Set.of("off")),
                 Map.entry("front_right_safety", Set.of("off")),
@@ -307,7 +307,7 @@ public class CustomTagTest extends Test {
         for (var k : way.keySet()) {
             if (k.equals("area_name")) {
                 var value = way.get(k);
-                if (value.equals("no stop"))
+                if (value.equals("non stop"))
                     return AreaType.NON_STOP;
                 else if (value.startsWith("park"))
                     return AreaType.PARK;
@@ -315,7 +315,7 @@ public class CustomTagTest extends Test {
                     return AreaType.SAFETY;
                 else if (value.startsWith("sync"))
                     return AreaType.SYNC;
-            } else if (k.equals("no_stop_area")) {
+            } else if (k.equals("non_stop_area")) {
                 return AreaType.NON_STOP;
             } else if (k.equals("area_detect") || k.equals("space_id")) {
                 return AreaType.PARK;
@@ -341,10 +341,10 @@ public class CustomTagTest extends Test {
             break;
         case NON_STOP:
             if (way.keySet().size() > 3)
-                addError(way, 6003, "Incorrect tag number for no stop area");
+                addError(way, 6003, "Incorrect tag number for non stop area");
             if (!way.hasKey("area_base") || !way.hasKey("area_name") ||
-                    !way.hasKey("no_stop_area"))
-                addError(way, 6003, "Incorrect tag combination for no stop area");
+                    !way.hasKey("non_stop_area"))
+                addError(way, 6003, "Incorrect tag combination for non stop area");
             break;
         case PARK:
             if (way.keySet().size() > 4)
