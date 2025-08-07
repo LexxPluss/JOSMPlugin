@@ -43,6 +43,10 @@ public class CustomTagTest extends Test {
          */
         GOAL_POSE,
         /**
+         * Marker pose way type.
+         */
+        MARKER_POSE,
+        /**
          * Oneway way type.
          */
         ONEWAY,
@@ -118,7 +122,7 @@ public class CustomTagTest extends Test {
         var other_ways = way.getDataSet().getWays().stream()
                 .filter(w -> w != way)
                 .collect(Collectors.toList());
-        Arrays.asList("area_name", "goal_id", "space_id", "sync_id")
+        Arrays.asList("area_name", "goal_id", "marker_group_id", "space_id", "sync_id")
                 .forEach(key -> checkDuplicateTagValue(way, key, other_ways));
     }
 
@@ -160,6 +164,7 @@ public class CustomTagTest extends Test {
                         "agv_line_start_offset",
                         "goal_id",
                         "line_info",
+                        "marker_group_id",
                         "oneway");
             }
         }
@@ -178,9 +183,12 @@ public class CustomTagTest extends Test {
                 "agv_node_id",
                 "goal_id",
                 "intermediate_goal_id",
+                "marker_group_id",
                 "space_id",
                 "sync_id");
         var doubleTags = Set.of(
+                "marker_height",
+                "marker_pitch_deg",
                 "X_image",
                 "Y_image");
         primitive.keySet().forEach(k -> {
@@ -213,7 +221,7 @@ public class CustomTagTest extends Test {
      */
     private void checkTagValue(OsmPrimitive primitive) {
         var tagMap = Map.ofEntries(
-                Map.entry("line_info",          Set.of("agv_pose", "goal_pose", "oneway_direction", "\"\"")),
+                Map.entry("line_info",          Set.of("agv_pose", "goal_pose", "marker_pose", "oneway_direction", "\"\"")),
                 Map.entry("oneway",             Set.of("yes", "no")),
                 Map.entry("area_info",          Set.of("sync_area")),
                 Map.entry("area_base",          Set.of("movable")),
@@ -274,10 +282,14 @@ public class CustomTagTest extends Test {
                     return WayType.AGV_POSE;
                 else if (value.equals("goal_pose"))
                     return WayType.GOAL_POSE;
+                else if (value.equals("marker_pose"))
+                    return WayType.MARKER_POSE;
                 else if (value.equals("oneway_direction"))
                     return WayType.ONEWAY_DIR;
             } else if (k.equals("goal_id")) {
                 return WayType.GOAL_POSE;
+            } else if (k.equals("marker_group_id")) {
+                return WayType.MARKER_POSE;
             } else if (k.equals("oneway")) {
                 return WayType.ONEWAY;
             }
@@ -303,6 +315,13 @@ public class CustomTagTest extends Test {
                 addError(way, 6003, "Incorrect tag number for goal pose");
             if (!way.hasKey("line_info") || !way.hasKey("goal_id"))
                 addError(way, 6003, "Incorrect tag combination for goal pose");
+            break;
+        case MARKER_POSE:
+            if (way.keySet().size() > 4)
+                addError(way, 6003, "Incorrect tag number for marker pose");
+            if (!way.hasKey("line_info") || !way.hasKey("marker_group_id") ||
+                    !way.hasKey("marker_height") || !way.hasKey("marker_pitch_deg"))
+                addError(way, 6003, "Incorrect tag combination for marker pose");
             break;
         case ONEWAY:
             if (way.keySet().size() > 2)
