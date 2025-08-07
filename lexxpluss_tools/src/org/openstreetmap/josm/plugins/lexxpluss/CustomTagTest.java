@@ -307,8 +307,13 @@ public class CustomTagTest extends Test {
             addError(way, 6003, "unknown way");
             break;
         case AGV_POSE:
-            if (way.keySet().size() > 1)
+            if (way.keySet().size() > 3)
                 addError(way, 6003, "Incorrect tag number for agv pose");
+            var validTags = Set.of("line_info", "agv_line_end_offset", "agv_line_start_offset");
+            for (var key : way.keySet()) {
+                if (!validTags.contains(key))
+                    addError(way, 6003, "Incorrect tag combination for agv pose");
+            }
             break;
         case GOAL_POSE:
             if (way.keySet().size() > 2)
