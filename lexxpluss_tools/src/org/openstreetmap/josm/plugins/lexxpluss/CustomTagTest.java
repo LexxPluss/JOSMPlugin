@@ -45,7 +45,11 @@ public class CustomTagTest extends Test {
         /**
          * Oneway way type.
          */
-        ONEWAY
+        ONEWAY,
+        /**
+         * Oneway direction way type.
+         */
+        ONEWAY_DIR
     };
 
     /**
@@ -204,7 +208,7 @@ public class CustomTagTest extends Test {
      */
     private void checkTagValue(OsmPrimitive primitive) {
         var tagMap = Map.ofEntries(
-                Map.entry("line_info",          Set.of("agv_pose", "goal_pose", "\"\"")),
+                Map.entry("line_info",          Set.of("agv_pose", "goal_pose", "oneway_direction", "\"\"")),
                 Map.entry("oneway",             Set.of("yes", "no")),
                 Map.entry("area_info",          Set.of("sync_area")),
                 Map.entry("area_base",          Set.of("movable")),
@@ -265,6 +269,8 @@ public class CustomTagTest extends Test {
                     return WayType.AGV_POSE;
                 else if (value.equals("goal_pose"))
                     return WayType.GOAL_POSE;
+                else if (value.equals("oneway_direction"))
+                    return WayType.ONEWAY_DIR;
             } else if (k.equals("goal_id")) {
                 return WayType.GOAL_POSE;
             } else if (k.equals("oneway")) {
@@ -298,6 +304,10 @@ public class CustomTagTest extends Test {
                 addError(way, 6003, "Incorrect tag number for oneway");
             if (!way.hasKey("line_info") || !way.hasKey("oneway"))
                 addError(way, 6003, "Incorrect tag combination for oneway");
+            break;
+        case ONEWAY_DIR:
+            if (way.keySet().size() > 1)
+                addError(way, 6003, "Incorrect tag number for oneway direction");
             break;
         }
     }
