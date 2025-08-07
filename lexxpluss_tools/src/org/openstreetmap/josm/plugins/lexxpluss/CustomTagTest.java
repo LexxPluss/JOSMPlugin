@@ -206,8 +206,28 @@ public class CustomTagTest extends Test {
                 "space_id",
                 "sync_id");
         var doubleTags = Set.of(
+                "agv_line_end_offset",
+                "agv_line_start_offset",
+                "diagonal_dir_sensitivity_left",
+                "diagonal_dir_sensitivity_right",
+                "front_left_stop_distance",
+                "front_left_warning_distance",
+                "front_right_stop_distance",
+                "front_right_warning_distance",
+                "front_stop_distance",
+                "front_warning_distance",
                 "marker_height",
                 "marker_pitch_deg",
+                "rear_left_stop_distance",
+                "rear_left_warning_distance",
+                "rear_right_stop_distance",
+                "rear_right_warning_distance",
+                "rear_stop_distance",
+                "rear_warning_distance",
+                "side_left_stop_distance",
+                "side_left_warning_distance",
+                "side_right_stop_distance",
+                "side_right_warning_distance",
                 "X_image",
                 "Y_image");
         primitive.keySet().forEach(k -> {
