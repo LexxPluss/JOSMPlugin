@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2024, LexxPluss Inc.
+ * Copyright (c) 2024-2025, LexxPluss Inc.
  * All rights reserved.
  * License: GPL. For details, see LICENSE file.
  */
@@ -43,9 +43,17 @@ public class CustomTagTest extends Test {
          */
         GOAL_POSE,
         /**
+         * Marker pose way type.
+         */
+        MARKER_POSE,
+        /**
          * Oneway way type.
          */
-        ONEWAY
+        ONEWAY,
+        /**
+         * Oneway direction way type.
+         */
+        ONEWAY_DIR
     };
 
     /**
@@ -56,6 +64,10 @@ public class CustomTagTest extends Test {
          * Unknown area type.
          */
         UNKNOWN,
+        /**
+         * Movable area type.
+         */
+        MOVABLE,
         /**
          * Non-stop area type.
          */
@@ -71,7 +83,11 @@ public class CustomTagTest extends Test {
         /**
          * Sync area type.
          */
-        SYNC
+        SYNC,
+        /**
+         * Oneway area type.
+         */
+        ONEWAY
     };
 
     /**
@@ -106,7 +122,7 @@ public class CustomTagTest extends Test {
         var other_ways = way.getDataSet().getWays().stream()
                 .filter(w -> w != way)
                 .collect(Collectors.toList());
-        Arrays.asList("goal_id", "space_id", "sync_id", "area_name")
+        Arrays.asList("area_detect", "area_name", "goal_id", "marker_group_id", "space_id", "sync_id")
                 .forEach(key -> checkDuplicateTagValue(way, key, other_ways));
     }
 
@@ -117,18 +133,58 @@ public class CustomTagTest extends Test {
     private void checkInvalidTag(OsmPrimitive primitive) {
         Set<String> validTags = null;
         if (primitive instanceof Node) {
-            validTags = Set.of("agv_node_id", "intermediate_goal_id", "X_image", "Y_image");
+            validTags = Set.of(
+                    "agv_node_id",
+                    "intermediate_goal_id",
+                    "X_image",
+                    "Y_image");
         } else if (primitive instanceof Way) {
             if (((Way)primitive).isArea()) {
-                validTags = Set.of("space_id", "sync_id",
-                        "area_base", "area_detect", "area_info", "area_name", "no_stop_area",
-                        "front_safety",  "front_left_safety", "front_right_safety",
-                        "side_left_safety", "side_right_safety",
-                        "rear_safety", "rear_left_safety", "rear_right_safety",
+                validTags = Set.of(
+                        "area_base",
+                        "area_detect",
+                        "area_info",
+                        "area_name",
+                        "diagonal_dir_sensitivity_left",
+                        "diagonal_dir_sensitivity_right",
+                        "front_left_safety",
+                        "front_left_stop_distance",
+                        "front_left_warning_distance",
+                        "front_right_safety",
+                        "front_right_stop_distance",
+                        "front_right_warning_distance",
+                        "front_safety",
+                        "front_stop_distance",
+                        "front_warning_distance",
+                        "non_stop_area",
+                        "oneway",
+                        "rear_left_safety",
+                        "rear_left_stop_distance",
+                        "rear_left_warning_distance",
+                        "rear_right_safety",
+                        "rear_right_stop_distance",
+                        "rear_right_warning_distance",
+                        "rear_safety",
+                        "rear_stop_distance",
+                        "rear_warning_distance",
+                        "section",
+                        "side_left_safety",
+                        "side_left_stop_distance",
+                        "side_left_warning_distance",
+                        "side_right_safety",
+                        "side_right_stop_distance",
+                        "side_right_warning_distance",
+                        "space_id",
+                        "sync_id",
                         "use_scan_hi");
             } else {
-                validTags = Set.of("goal_id", "line_info", "oneway",
-                                                "agv_line_end_offset", "agv_line_start_offset");
+                validTags = Set.of(
+                        "agv_line_end_offset",
+                        "agv_line_start_offset",
+                        "goal_id",
+                        "line_info",
+                        "marker_group_id",
+                        "oneway");
             }
         }
         for (var key : primitive.keySet()) {
@@ -143,10 +199,37 @@ public class CustomTagTest extends Test {
      */
     private void checkNumericTagValue(OsmPrimitive primitive) {
         var intTags = Set.of(
-                "agv_node_id", "goal_id",
-                "space_id", "sync_id",
-                "intermediate_goal_id");
-        var doubleTags = Set.of("X_image", "Y_image");
+                "agv_node_id",
+                "goal_id",
+                "intermediate_goal_id",
+                "marker_group_id",
+                "space_id",
+                "sync_id");
+        var doubleTags = Set.of(
+                "agv_line_end_offset",
+                "agv_line_start_offset",
+                "diagonal_dir_sensitivity_left",
+                "diagonal_dir_sensitivity_right",
+                "front_left_stop_distance",
+                "front_left_warning_distance",
+                "front_right_stop_distance",
+                "front_right_warning_distance",
+                "front_stop_distance",
+                "front_warning_distance",
+                "marker_height",
+                "marker_pitch_deg",
+                "rear_left_stop_distance",
+                "rear_left_warning_distance",
+                "rear_right_stop_distance",
+                "rear_right_warning_distance",
+                "rear_stop_distance",
+                "rear_warning_distance",
+                "side_left_stop_distance",
+                "side_left_warning_distance",
+                "side_right_stop_distance",
+                "side_right_warning_distance",
+                "X_image",
+                "Y_image");
         primitive.keySet().forEach(k -> {
             var value = primitive.get(k);
             String intValue = null;
@@ -177,11 +260,11 @@ public class CustomTagTest extends Test {
      */
     private void checkTagValue(OsmPrimitive primitive) {
         var tagMap = Map.ofEntries(
-                Map.entry("line_info",          Set.of("agv_pose", "goal_pose", "\"\"")),
-                Map.entry("one_way",            Set.of("yes", "no")),
+                Map.entry("line_info",          Set.of("agv_pose", "goal_pose", "marker_pose", "oneway_direction", "\"\"")),
+                Map.entry("oneway",             Set.of("yes", "no")),
                 Map.entry("area_info",          Set.of("sync_area")),
                 Map.entry("area_base",          Set.of("movable")),
-                Map.entry("no_stop_area",       Set.of("true")),
+                Map.entry("non_stop_area",      Set.of("true")),
                 Map.entry("front_safety",       Set.of("off")),
                 Map.entry("front_left_safety",  Set.of("off")),
                 Map.entry("front_right_safety", Set.of("off")),
@@ -238,8 +321,14 @@ public class CustomTagTest extends Test {
                     return WayType.AGV_POSE;
                 else if (value.equals("goal_pose"))
                     return WayType.GOAL_POSE;
+                else if (value.equals("marker_pose"))
+                    return WayType.MARKER_POSE;
+                else if (value.equals("oneway_direction"))
+                    return WayType.ONEWAY_DIR;
             } else if (k.equals("goal_id")) {
                 return WayType.GOAL_POSE;
+            } else if (k.equals("marker_group_id")) {
+                return WayType.MARKER_POSE;
             } else if (k.equals("oneway")) {
                 return WayType.ONEWAY;
             }
@@ -257,20 +346,42 @@ public class CustomTagTest extends Test {
             addError(way, 6003, "unknown way");
             break;
         case AGV_POSE:
-            if (way.keySet().size() > 1)
-                addError(way, 6003, "Invalid tag combination line_info=agv_pose & other tags");
+            if (way.keySet().size() > 3)
+                addError(way, 6003, "Incorrect tag number for agv pose");
+            var validTags = Set.of("line_info", "agv_line_end_offset", "agv_line_start_offset");
+            for (var key : way.keySet()) {
+                if (!validTags.contains(key))
+                    addError(way, 6003, "Incorrect tag combination for agv pose");
+            }
             break;
         case GOAL_POSE:
             if (way.keySet().size() > 2)
-                addError(way, 6003, "Invalid tag combination line_info=goal_pose & other tags");
+                addError(way, 6003, "Incorrect tag number for goal pose");
             if (!way.hasKey("line_info") || !way.hasKey("goal_id"))
                 addError(way, 6003, "Incorrect tag combination for goal pose");
             break;
+        case MARKER_POSE:
+            if (way.keySet().size() > 4)
+                addError(way, 6003, "Incorrect tag number for marker pose");
+            if (!way.hasKey("line_info") || !way.hasKey("marker_group_id") ||
+                    !way.hasKey("marker_height") || !way.hasKey("marker_pitch_deg"))
+                addError(way, 6003, "Incorrect tag combination for marker pose");
+            break;
         case ONEWAY:
-            if (way.keySet().size() > 2)
-                addError(way, 6003, "Invalid tag combination oneway & other tags");
-            if (!way.hasKey("line_info") || !way.hasKey("oneway"))
-                addError(way, 6003, "Incorrect tag combination for oneway");
+            var keys = way.keySet().size();
+            if (keys > 2) {
+                addError(way, 6003, "Incorrect tag number for oneway");
+            } else if (keys == 1) {
+                if (!way.hasKey("oneway"))
+                    addError(way, 6003, "Incorrect tag combination for oneway");
+            } else if (keys == 2) {
+                if (!way.hasKey("line_info") || !way.hasKey("oneway"))
+                    addError(way, 6003, "Incorrect tag combination for oneway");
+            }
+            break;
+        case ONEWAY_DIR:
+            if (way.keySet().size() > 1)
+                addError(way, 6003, "Incorrect tag number for oneway direction");
             break;
         }
     }
@@ -284,15 +395,15 @@ public class CustomTagTest extends Test {
         for (var k : way.keySet()) {
             if (k.equals("area_name")) {
                 var value = way.get(k);
-                if (value.equals("no stop"))
+                if (value.equals("non stop"))
                     return AreaType.NON_STOP;
                 else if (value.startsWith("park"))
                     return AreaType.PARK;
-                else if (value.equals("warning"))
+                else if (value.startsWith("warning"))
                     return AreaType.SAFETY;
                 else if (value.startsWith("sync"))
                     return AreaType.SYNC;
-            } else if (k.equals("no_stop_area")) {
+            } else if (k.equals("non_stop_area")) {
                 return AreaType.NON_STOP;
             } else if (k.equals("area_detect") || k.equals("space_id")) {
                 return AreaType.PARK;
@@ -302,8 +413,12 @@ public class CustomTagTest extends Test {
                 return AreaType.SAFETY;
             } else if (k.equals("sync_id") || k.equals("area_info")) {
                 return AreaType.SYNC;
+            } else if (k.equals("oneway")) {
+                return AreaType.ONEWAY;
             }
         }
+        if (way.hasKey("area_base") && way.get("area_base").equals("movable"))
+            return AreaType.MOVABLE;
         return AreaType.UNKNOWN;
     }
 
@@ -316,32 +431,40 @@ public class CustomTagTest extends Test {
         case UNKNOWN:
             addError(way, 6003, "unknown area");
             break;
+        case MOVABLE:
+            break;
         case NON_STOP:
             if (way.keySet().size() > 3)
-                addError(way, 6003, "Invalid tag combination area_name=no stop & other tags");
+                addError(way, 6003, "Incorrect tag number for non stop area");
             if (!way.hasKey("area_base") || !way.hasKey("area_name") ||
-                    !way.hasKey("no_stop_area"))
-                addError(way, 6003, "Incorrect tag combination for no stop area");
+                    !way.hasKey("non_stop_area"))
+                addError(way, 6003, "Incorrect tag combination for non stop area");
             break;
         case PARK:
             if (way.keySet().size() > 4)
-                addError(way, 6003, "Invalid tag combination area_name=park & other tags");
+                addError(way, 6003, "Incorrect tag number for parking area");
             if (!way.hasKey("area_base") || !way.hasKey("area_name") ||
                     !way.hasKey("area_detect") || !way.hasKey("space_id"))
                 addError(way, 6003, "Incorrect tag combination for parking area");
             break;
         case SAFETY:
             if (way.keySet().size() > 10)
-                addError(way, 6003, "Invalid tag combination area_name=warning & other tags");
+                addError(way, 6003, "Incorrect tag number for safety area");
             if (!way.hasKey("area_base") || !way.hasKey("area_name"))
                 addError(way, 6003, "Incorrect tag combination for safety area");
             break;
         case SYNC:
             if (way.keySet().size() > 4)
-                addError(way, 6003, "Invalid tag combination area_name=sync & other tags");
+                addError(way, 6003, "Incorrect tag number for sync area");
             if (!way.hasKey("area_base") || !way.hasKey("area_name") ||
                     !way.hasKey("sync_id") || !way.hasKey("area_info"))
                 addError(way, 6003, "Incorrect tag combination for sync area");
+            break;
+        case ONEWAY:
+            if (way.keySet().size() > 2)
+                addError(way, 6003, "Incorrect tag number for oneway area");
+            if (!way.hasKey("area_base") || !way.hasKey("oneway"))
+                addError(way, 6003, "Incorrect tag combination for oneway area");
             break;
         }
     }

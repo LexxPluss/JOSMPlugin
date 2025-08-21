@@ -37,8 +37,8 @@ public class NonStopAreaAction extends JosmAction {
         var way = ds.getLastSelectedWay();
         Collection<Command> cmds = new LinkedList<>();
         cmds.add(new ChangePropertyCommand(way, "area_base", "movable"));
-        cmds.add(new ChangePropertyCommand(way, "area_name", "no stop"));
-        cmds.add(new ChangePropertyCommand(way, "no_stop_area", "true"));
+        cmds.add(new ChangePropertyCommand(way, "area_name", "non stop"));
+        cmds.add(new ChangePropertyCommand(way, "non_stop_area", "true"));
         UndoRedoHandler.getInstance().add(new SequenceCommand("Non-Stop area", cmds));
     }
 
