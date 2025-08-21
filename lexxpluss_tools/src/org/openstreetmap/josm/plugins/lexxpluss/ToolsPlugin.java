@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2024, LexxPluss Inc.
+ * Copyright (c) 2025, LexxPluss Inc.
  * All rights reserved.
  * License: GPL. For details, see LICENSE file.
  */
@@ -68,6 +68,7 @@ public class ToolsPlugin extends Plugin {
         MainMenu.add(moreMenu, new NonStopAreaAction());
         MainMenu.add(moreMenu, new CSVAMRGoalCaptureAction());
         MainMenu.add(moreMenu, new CSVPGVTapeCaptureAction());
+        MainMenu.add(moreMenu, new CoordChangeListenerAction());
         OsmValidator.addTest(CustomTagTest.class);
     }
 

@@ -55,7 +55,7 @@ public class LexxPlussExporter extends OsmExporter {
         // record info in this tag to save for re-transform
         TagMap tags = new TagMap();
         tags.put("transform matrix","");
-    	
+
         Image image = null;
         AffineTransform transform = null;   // 画像の表示位置変換アフィン行列
         EastNorth imagePosition = null;     // en単位での画像中央位置
@@ -219,7 +219,7 @@ public class LexxPlussExporter extends OsmExporter {
                 node.put("X_image", String.valueOf(x));
                 node.put("Y_image", String.valueOf(y));
                 // System.out.println("Node Keys=" + node.getNumKeys());
-            ofs++;
+                ofs++;
             }
         } catch (Exception e) {
             Logging.log(Level.WARNING, "Could not rescaling.", e);
