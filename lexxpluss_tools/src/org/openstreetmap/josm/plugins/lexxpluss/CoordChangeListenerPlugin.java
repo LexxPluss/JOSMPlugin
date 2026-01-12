@@ -204,7 +204,7 @@ public class CoordChangeListenerPlugin implements DataSetListener {
     }
 
     private void performCoordinateUpdate(Node node) {
-        System.out.println("Node shall be moved to map coords: " + Double.toString(finalLatLon.getX()) + ", " + Double.toString(finalLatLon.getY()));
+//        System.out.println("Node shall be moved to map coords: " + Double.toString(finalLatLon.getX()) + ", " + Double.toString(finalLatLon.getY()));
         UndoRedoHandler.getInstance().add(new MoveCommand(node, this.finalLatLon));
     }
 
