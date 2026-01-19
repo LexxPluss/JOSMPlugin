@@ -89,8 +89,12 @@ public class CoordChangeListenerPlugin implements DataSetListener {
         // Get the original tags (before change)
         Map<String, String> originalTags = event.getOriginalKeys();
         Map<String, String> newTags = node.getKeys();
+        
+        String oldX = originalTags.get("X_image");
+        String oldY = originalTags.get("Y_image");
 
-        if (originalTags.get("X_image").isEmpty() || originalTags.get("Y_image").isEmpty()) {
+        // Check if null OR empty
+        if (oldX == null || oldX.isEmpty() || oldY == null || oldY.isEmpty()) {
             return;
         }
 
