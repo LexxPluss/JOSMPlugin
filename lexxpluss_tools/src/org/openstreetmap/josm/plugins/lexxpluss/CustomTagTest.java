@@ -264,15 +264,15 @@ public class CustomTagTest extends Test {
                 Map.entry("oneway",             Set.of(BooleanTagValues.YES, BooleanTagValues.NO)),
                 Map.entry("area_info",          Set.of("sync_area")),
                 Map.entry("area_base",          Set.of("movable")),
-                Map.entry("non_stop_area",      Set.of(BooleanTagValues.NON_STOP_AREA_ON)),
-                Map.entry("front_safety",       Set.of(BooleanTagValues.SAFETY_OFF)),
-                Map.entry("front_left_safety",  Set.of(BooleanTagValues.SAFETY_OFF)),
-                Map.entry("front_right_safety", Set.of(BooleanTagValues.SAFETY_OFF)),
-                Map.entry("side_left_safety",   Set.of(BooleanTagValues.SAFETY_OFF)),
-                Map.entry("side_right_safety",  Set.of(BooleanTagValues.SAFETY_OFF)),
-                Map.entry("rear_safety",        Set.of(BooleanTagValues.SAFETY_OFF)),
-                Map.entry("rear_left_safety",   Set.of(BooleanTagValues.SAFETY_OFF)),
-                Map.entry("rear_right_safety",  Set.of(BooleanTagValues.SAFETY_OFF)));
+                Map.entry("non_stop_area",      Set.of(BooleanTagValues.LEGACY_NON_STOP_AREA_ON)),
+                Map.entry("front_safety",       Set.of(BooleanTagValues.LEGACY_SAFETY_OFF)),
+                Map.entry("front_left_safety",  Set.of(BooleanTagValues.LEGACY_SAFETY_OFF)),
+                Map.entry("front_right_safety", Set.of(BooleanTagValues.LEGACY_SAFETY_OFF)),
+                Map.entry("side_left_safety",   Set.of(BooleanTagValues.LEGACY_SAFETY_OFF)),
+                Map.entry("side_right_safety",  Set.of(BooleanTagValues.LEGACY_SAFETY_OFF)),
+                Map.entry("rear_safety",        Set.of(BooleanTagValues.LEGACY_SAFETY_OFF)),
+                Map.entry("rear_left_safety",   Set.of(BooleanTagValues.LEGACY_SAFETY_OFF)),
+                Map.entry("rear_right_safety",  Set.of(BooleanTagValues.LEGACY_SAFETY_OFF)));
         primitive.keySet().forEach(k -> {
             var valueSet = tagMap.get(k);
             if (valueSet != null && !valueSet.contains(primitive.get(k)))
