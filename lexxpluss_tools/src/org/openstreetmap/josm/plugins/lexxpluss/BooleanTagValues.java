@@ -8,7 +8,8 @@ package org.openstreetmap.josm.plugins.lexxpluss;
 
 /**
  * Values written to and accepted for boolean-like LexxPluss tags.
- * IOP-1821 moves the legacy values to yes/no after LexxAuto accepts yes/no.
+ * The legacy values stay until LexxAuto accepts yes/no (AMRSW-3982).
+ * On the switch, CustomTagTest must keep accepting them for existing maps.
  */
 final class BooleanTagValues {
     static final String YES = "yes";
