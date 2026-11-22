@@ -261,18 +261,18 @@ public class CustomTagTest extends Test {
     private void checkTagValue(OsmPrimitive primitive) {
         var tagMap = Map.ofEntries(
                 Map.entry("line_info",          Set.of("agv_pose", "goal_pose", "marker_pose", "oneway_direction", "\"\"")),
-                Map.entry("oneway",             Set.of("yes", "no")),
+                Map.entry("oneway",             Set.of(BooleanTagValues.YES, BooleanTagValues.NO)),
                 Map.entry("area_info",          Set.of("sync_area")),
                 Map.entry("area_base",          Set.of("movable")),
-                Map.entry("non_stop_area",      Set.of("true")),
-                Map.entry("front_safety",       Set.of("off")),
-                Map.entry("front_left_safety",  Set.of("off")),
-                Map.entry("front_right_safety", Set.of("off")),
-                Map.entry("side_left_safety",   Set.of("off")),
-                Map.entry("side_right_safety",  Set.of("off")),
-                Map.entry("rear_safety",        Set.of("off")),
-                Map.entry("rear_left_safety",   Set.of("off")),
-                Map.entry("rear_right_safety",  Set.of("off")));
+                Map.entry("non_stop_area",      Set.of(BooleanTagValues.NON_STOP_AREA_ON)),
+                Map.entry("front_safety",       Set.of(BooleanTagValues.SAFETY_OFF)),
+                Map.entry("front_left_safety",  Set.of(BooleanTagValues.SAFETY_OFF)),
+                Map.entry("front_right_safety", Set.of(BooleanTagValues.SAFETY_OFF)),
+                Map.entry("side_left_safety",   Set.of(BooleanTagValues.SAFETY_OFF)),
+                Map.entry("side_right_safety",  Set.of(BooleanTagValues.SAFETY_OFF)),
+                Map.entry("rear_safety",        Set.of(BooleanTagValues.SAFETY_OFF)),
+                Map.entry("rear_left_safety",   Set.of(BooleanTagValues.SAFETY_OFF)),
+                Map.entry("rear_right_safety",  Set.of(BooleanTagValues.SAFETY_OFF)));
         primitive.keySet().forEach(k -> {
             var valueSet = tagMap.get(k);
             if (valueSet != null && !valueSet.contains(primitive.get(k)))
@@ -515,7 +515,7 @@ public class CustomTagTest extends Test {
         var value = way.get("line_info");
         if (value != null && value.equals("\"\"")) {
             var oneway = way.get("oneway");
-            if (oneway != null && (oneway.equals("yes") || oneway.equals("no"))) {
+            if (oneway != null && (oneway.equals(BooleanTagValues.YES) || oneway.equals(BooleanTagValues.NO))) {
                 if (way.getNodesCount() != 2)
                     addError(way, 6005, "Way with oneway must split");
             }

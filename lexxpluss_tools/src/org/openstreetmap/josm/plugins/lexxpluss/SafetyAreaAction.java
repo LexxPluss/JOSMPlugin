@@ -38,14 +38,14 @@ public class SafetyAreaAction extends JosmAction {
         Collection<Command> cmds = new LinkedList<>();
         cmds.add(new ChangePropertyCommand(way, "area_base", "movable"));
         cmds.add(new ChangePropertyCommand(way, "area_name", "warning"));
-        cmds.add(new ChangePropertyCommand(way, "front_safety", "off"));
-        cmds.add(new ChangePropertyCommand(way, "front_left_safety", "off"));
-        cmds.add(new ChangePropertyCommand(way, "front_right_safety", "off"));
-        cmds.add(new ChangePropertyCommand(way, "side_left_safety", "off"));
-        cmds.add(new ChangePropertyCommand(way, "side_right_safety", "off"));
-        cmds.add(new ChangePropertyCommand(way, "rear_safety", "off"));
-        cmds.add(new ChangePropertyCommand(way, "rear_left_safety", "off"));
-        cmds.add(new ChangePropertyCommand(way, "rear_right_safety", "off"));
+        cmds.add(new ChangePropertyCommand(way, "front_safety", BooleanTagValues.SAFETY_OFF));
+        cmds.add(new ChangePropertyCommand(way, "front_left_safety", BooleanTagValues.SAFETY_OFF));
+        cmds.add(new ChangePropertyCommand(way, "front_right_safety", BooleanTagValues.SAFETY_OFF));
+        cmds.add(new ChangePropertyCommand(way, "side_left_safety", BooleanTagValues.SAFETY_OFF));
+        cmds.add(new ChangePropertyCommand(way, "side_right_safety", BooleanTagValues.SAFETY_OFF));
+        cmds.add(new ChangePropertyCommand(way, "rear_safety", BooleanTagValues.SAFETY_OFF));
+        cmds.add(new ChangePropertyCommand(way, "rear_left_safety", BooleanTagValues.SAFETY_OFF));
+        cmds.add(new ChangePropertyCommand(way, "rear_right_safety", BooleanTagValues.SAFETY_OFF));
         UndoRedoHandler.getInstance().add(new SequenceCommand("Safety area", cmds));
     }
 

@@ -38,7 +38,7 @@ public class IntermediateGoalAction extends JosmAction {
         var way = ds.getLastSelectedWay();
         Collection<Command> cmds = new LinkedList<>();
         cmds.add(new ChangePropertyCommand(way, "line_info", "\"\""));
-        cmds.add(new ChangePropertyCommand(way, "oneway", "yes"));
+        cmds.add(new ChangePropertyCommand(way, "oneway", BooleanTagValues.YES));
         var nodes = way.getNodes();
         var max = ToolsPlugin.getMaxId(ds.getNodes(), "intermediate_goal_id");
         var key = "intermediate_goal_id";
