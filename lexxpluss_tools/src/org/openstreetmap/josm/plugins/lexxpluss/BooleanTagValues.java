@@ -11,7 +11,7 @@ package org.openstreetmap.josm.plugins.lexxpluss;
  * The written values stay legacy until LexxAuto accepts yes/no (AMRSW-3982).
  */
 final class BooleanTagValues {
-    // LexxAuto reads these only for oneway until AMRSW-3982.
+    // Only for tags that LexxAuto already reads as yes/no, such as oneway.
     static final String YES = "yes";
     static final String NO = "no";
 
