@@ -176,6 +176,7 @@ public class LexxPlussExporter extends OsmExporter {
             
         } catch (NoninvertibleTransformException e) {
             Logging.log(Level.WARNING, "Could not inverseTransform.", e);
+            dataSet.endUpdate();
             // 通常のOSM保存処理を実行させる
             super.doSave(file, layer);
             return;
@@ -225,6 +226,7 @@ public class LexxPlussExporter extends OsmExporter {
             }
         } catch (Exception e) {
             Logging.log(Level.WARNING, "Could not rescaling.", e);
+            dataSet.endUpdate();
             // 通常のOSM保存処理を実行させる
             super.doSave(file, layer);
             return;
