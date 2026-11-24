@@ -341,11 +341,12 @@ public class LexxPlussExporter extends OsmExporter {
     }
 
     private static boolean isRelationMember(Way way) {
-        // A deleted relation is no longer among the way's referrers but is still written with its members,
-        // so all relations of the dataset are checked.
+        // A deleted relation is no longer among the way's referrers but is still written with its members
+        // unless it is new, so all relations of the dataset are checked.
         DataSet dataSet = way.getDataSet();
-        return dataSet == null
-                || dataSet.getRelations().stream().anyMatch(r -> r.getMemberPrimitivesList().contains(way));
+        return dataSet == null || dataSet.getRelations().stream()
+                .filter(r -> !r.isNewOrUndeleted() || !r.isDeleted())
+                .anyMatch(r -> r.getMemberPrimitivesList().contains(way));
     }
 
     private static void removeKeys(Way way, TagMap tags) {
