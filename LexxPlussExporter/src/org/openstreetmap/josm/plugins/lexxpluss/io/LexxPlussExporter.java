@@ -12,6 +12,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -21,7 +22,6 @@ import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Node;
 import org.openstreetmap.josm.data.osm.Way;
-import org.openstreetmap.josm.data.osm.Tag;
 import org.openstreetmap.josm.data.osm.TagMap;
 import org.openstreetmap.josm.gui.MainApplication;
 import org.openstreetmap.josm.gui.io.importexport.OsmExporter;
@@ -43,6 +43,8 @@ public class LexxPlussExporter extends OsmExporter {
      * File extension.
      */
     private static final String EXTENSION = "osm";
+
+    private static final String TRANSFORM_MATRIX_KEY = "transform matrix";
     
     public LexxPlussExporter() {
         super(new ExtensionFileFilter(EXTENSION, EXTENSION, 
@@ -54,7 +56,7 @@ public class LexxPlussExporter extends OsmExporter {
 
         // record info in this tag to save for re-transform
         TagMap tags = new TagMap();
-        tags.put("transform matrix","");
+        tags.put(TRANSFORM_MATRIX_KEY, "");
 
         Image image = null;
         AffineTransform transform = null;   // 画像の表示位置変換アフィン行列
@@ -236,33 +238,42 @@ public class LexxPlussExporter extends OsmExporter {
 
     /**
      * Writes the transform tags into the dataset's transform matrix way,
-     * creating the way if the dataset has none.
+     * creating the way if the dataset has none and removing duplicates.
      * @param dataSet dataset to be saved
      * @param tags transform tags, including the "transform matrix" key
      */
     static void updateTransformMatrixWay(DataSet dataSet, TagMap tags) {
         try {
-            List<Way> ways = new ArrayList<Way>(dataSet.getWays());
-            boolean exist = false;
-            for (Way way: ways) {
-                TagMap ts = way.getKeys();
-                for (Tag tag: ts.getTags()) {
-                    if (tag.getKey() == "transform matrix") {
-                        exist = true;
-                        way.removeAll();
-                        way.setKeys(tags);
-                        break;
-                    }
-                }
-                if (exist) {
-                    break;
+            List<Way> matrixWays = new ArrayList<Way>();
+            for (Way way : dataSet.getWays()) {
+                if (!way.isDeleted() && way.hasKey(TRANSFORM_MATRIX_KEY)) {
+                    matrixWays.add(way);
                 }
             }
-            if (!exist) {
-                // create new Way
+            if (matrixWays.isEmpty()) {
                 Way w = new Way();
                 w.setKeys(tags);
                 dataSet.addPrimitive(w);
+                return;
+            }
+            // getWays() order is not stable, so pick the survivor by id.
+            matrixWays.sort(Comparator.comparingLong(Way::getUniqueId));
+            boolean kept = false;
+            for (Way way : matrixWays) {
+                // setDeleted() is not enough: OsmWriter still writes a deleted way that has a positive id.
+                // removePrimitive() leaves references dangling, so only a way nothing depends on is removed.
+                boolean removable = way.getNodesCount() == 0 && way.getReferrers().isEmpty();
+                if (kept && removable) {
+                    dataSet.removePrimitive(way);
+                    continue;
+                }
+                if (kept) {
+                    Logging.log(Level.WARNING, "Keeping an extra transform matrix way that has nodes or referrers: "
+                            + way.getUniqueId(), null);
+                }
+                way.removeAll();
+                way.setKeys(tags);
+                kept = true;
             }
         }
         catch (Exception e) {
