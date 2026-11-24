@@ -12,7 +12,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -22,6 +21,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -61,11 +61,9 @@ public class LexxPlussExporter extends OsmExporter {
     /**
      * Duplicate matrix ways whose transform tags were removed. They stay in the dataset because
      * commands on the undo/redo stack may point at them, but are left out of the file while empty.
-     * Way.equals compares only the id, so the value holds the way itself to tell apart ways with the same id
-     * in other layers.
+     * Way.equals compares only the id, and two layers opened from one file share ids, so the ways are kept per dataset.
      */
-    private static final Map<Way, WeakReference<Way>> STRIPPED_WAYS =
-            Collections.synchronizedMap(new WeakHashMap<>());
+    private static final Map<DataSet, Set<Way>> STRIPPED_WAYS = Collections.synchronizedMap(new WeakHashMap<>());
     
     public LexxPlussExporter() {
         super(new ExtensionFileFilter(EXTENSION, EXTENSION, 
@@ -293,7 +291,8 @@ public class LexxPlussExporter extends OsmExporter {
                 // Only the tags go; the way stays. Commands on the undo/redo stack may still point at it,
                 // and they throw if it left the dataset (removePrimitive) or was already deleted (setDeleted).
                 removeKeys(extra, tags);
-                STRIPPED_WAYS.put(extra, new WeakReference<>(extra));
+                STRIPPED_WAYS.computeIfAbsent(dataSet,
+                        k -> Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()))).add(extra);
                 if (!extra.isDeleted() && (extra.getNodesCount() > 0 || !extra.getReferrers().isEmpty())) {
                     Logging.warn("Removed transform tags from a way that has nodes or referrers: "
                             + extra.getUniqueId());
@@ -337,8 +336,8 @@ public class LexxPlussExporter extends OsmExporter {
         if (!(osm instanceof Way way) || way.hasKeys() || way.getNodesCount() > 0) {
             return false;
         }
-        WeakReference<Way> stripped = STRIPPED_WAYS.get(way);
-        return stripped != null && stripped.get() == way && !isRelationMember(way);
+        Set<Way> stripped = STRIPPED_WAYS.get(way.getDataSet());
+        return stripped != null && stripped.contains(way) && !isRelationMember(way);
     }
 
     private static boolean isRelationMember(Way way) {
