@@ -331,7 +331,15 @@ public class LexxPlussExporter extends OsmExporter {
     private static boolean isEmptyStrippedWay(OsmPrimitive osm) {
         // A stripped way that undo restored or the user reused has tags or nodes again, and is written.
         return osm instanceof Way way && STRIPPED_WAYS.contains(way) && !way.hasKeys()
-                && way.getNodesCount() == 0 && way.getReferrers().isEmpty();
+                && way.getNodesCount() == 0 && !isRelationMember(way);
+    }
+
+    private static boolean isRelationMember(Way way) {
+        // A deleted relation is no longer among the way's referrers but is still written with its members,
+        // so all relations of the dataset are checked.
+        DataSet dataSet = way.getDataSet();
+        return dataSet == null
+                || dataSet.getRelations().stream().anyMatch(r -> r.getMemberPrimitivesList().contains(way));
     }
 
     private static void removeKeys(Way way, TagMap tags) {
