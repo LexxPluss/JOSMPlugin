@@ -270,18 +270,12 @@ public class LexxPlussExporter extends OsmExporter {
                 if (extra == survivor) {
                     continue;
                 }
-                if (extra.isDeleted()) {
-                    // OsmWriter still writes a deleted way that has a positive id, so strip its tags.
-                    // Removing it would break undo: DeleteCommand.undoCommand requires it in the dataset.
-                    removeKeys(extra, tags);
-                } else if (extra.getNodesCount() == 0 && extra.getReferrers().isEmpty()) {
-                    // removePrimitive() leaves references dangling, so only a way nothing depends on is removed.
-                    dataSet.removePrimitive(extra);
-                } else {
-                    // A way that other data uses keeps its own tags and loses only the transform tags.
-                    Logging.warn("Removing transform tags from a way that has nodes or referrers: "
+                // Only the tags go; the way stays. Commands on the undo/redo stack may still point at it,
+                // and they throw if it left the dataset (removePrimitive) or was already deleted (setDeleted).
+                removeKeys(extra, tags);
+                if (!extra.isDeleted() && (extra.getNodesCount() > 0 || !extra.getReferrers().isEmpty())) {
+                    Logging.warn("Removed transform tags from a way that has nodes or referrers: "
                             + extra.getUniqueId());
-                    removeKeys(extra, tags);
                 }
             }
         }
