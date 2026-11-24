@@ -242,32 +242,45 @@ public class LexxPlussExporter extends OsmExporter {
     /**
      * Writes the transform tags into the dataset's transform matrix way,
      * creating the way if the dataset has none and removing duplicates.
+     * The survivor is a live way without nodes; other ways keep their own tags.
      * @param dataSet dataset to be saved
      * @param tags transform tags, including the "transform matrix" key
      */
     static void updateTransformMatrixWay(DataSet dataSet, TagMap tags) {
         try {
+            // getWays() order is not stable, so pick the survivor by id.
+            // The highest id is the oldest way (new ways get decreasing negative ids), so undoing
+            // the paste that created a duplicate does not remove the survivor.
             List<Way> matrixWays = dataSet.getWays().stream()
-                    .filter(w -> !w.isDeleted() && w.hasKey(TRANSFORM_MATRIX_KEY))
-                    // getWays() order is not stable, so pick the survivor by id.
-                    .sorted(Comparator.comparingLong(Way::getUniqueId))
+                    .filter(w -> w.hasKey(TRANSFORM_MATRIX_KEY))
+                    .sorted(Comparator.comparingLong(Way::getUniqueId).reversed())
                     .collect(Collectors.toList());
-            if (matrixWays.isEmpty()) {
-                Way w = new Way();
-                w.setKeys(tags);
-                dataSet.addPrimitive(w);
-                return;
+            Way survivor = matrixWays.stream()
+                    .filter(w -> !w.isDeleted() && w.getNodesCount() == 0)
+                    .findFirst()
+                    .orElse(null);
+            if (survivor == null) {
+                survivor = new Way();
+                survivor.setKeys(tags);
+                dataSet.addPrimitive(survivor);
+            } else {
+                survivor.setKeys(tags);
             }
-            matrixWays.get(0).setKeys(tags);
-            for (Way extra : matrixWays.subList(1, matrixWays.size())) {
+            for (Way extra : matrixWays) {
+                if (extra == survivor) {
+                    continue;
+                }
                 // setDeleted() is not enough: OsmWriter still writes a deleted way that has a positive id.
                 // removePrimitive() leaves references dangling, so only a way nothing depends on is removed.
                 if (extra.getNodesCount() == 0 && extra.getReferrers().isEmpty()) {
                     dataSet.removePrimitive(extra);
                 } else {
-                    Logging.warn("Keeping an extra transform matrix way that has nodes or referrers: "
+                    // A way with nodes is real map data: drop only the transform tags and keep its own.
+                    Logging.warn("Removing transform tags from a way that has nodes or referrers: "
                             + extra.getUniqueId());
-                    extra.setKeys(tags);
+                    for (String key : tags.keySet()) {
+                        extra.remove(key);
+                    }
                 }
             }
         }
