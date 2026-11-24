@@ -241,8 +241,8 @@ public class LexxPlussExporter extends OsmExporter {
 
     /**
      * Writes the transform tags into the dataset's transform matrix way,
-     * creating the way if the dataset has none and removing duplicates.
-     * The survivor is a live way without nodes; other ways keep their own tags.
+     * creating the way if the dataset has none.
+     * The survivor is a live way without nodes; any other way loses only the transform tags.
      * @param dataSet dataset to be saved
      * @param tags transform tags, including the "transform matrix" key
      */
