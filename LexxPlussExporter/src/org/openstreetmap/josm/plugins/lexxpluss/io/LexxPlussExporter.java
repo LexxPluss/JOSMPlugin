@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 
 import org.openstreetmap.josm.actions.ExtensionFileFilter;
@@ -246,36 +247,28 @@ public class LexxPlussExporter extends OsmExporter {
      */
     static void updateTransformMatrixWay(DataSet dataSet, TagMap tags) {
         try {
-            List<Way> matrixWays = new ArrayList<Way>();
-            for (Way way : dataSet.getWays()) {
-                if (!way.isDeleted() && way.hasKey(TRANSFORM_MATRIX_KEY)) {
-                    matrixWays.add(way);
-                }
-            }
+            List<Way> matrixWays = dataSet.getWays().stream()
+                    .filter(w -> !w.isDeleted() && w.hasKey(TRANSFORM_MATRIX_KEY))
+                    // getWays() order is not stable, so pick the survivor by id.
+                    .sorted(Comparator.comparingLong(Way::getUniqueId))
+                    .collect(Collectors.toList());
             if (matrixWays.isEmpty()) {
                 Way w = new Way();
                 w.setKeys(tags);
                 dataSet.addPrimitive(w);
                 return;
             }
-            // getWays() order is not stable, so pick the survivor by id.
-            matrixWays.sort(Comparator.comparingLong(Way::getUniqueId));
-            boolean kept = false;
-            for (Way way : matrixWays) {
+            matrixWays.get(0).setKeys(tags);
+            for (Way extra : matrixWays.subList(1, matrixWays.size())) {
                 // setDeleted() is not enough: OsmWriter still writes a deleted way that has a positive id.
                 // removePrimitive() leaves references dangling, so only a way nothing depends on is removed.
-                boolean removable = way.getNodesCount() == 0 && way.getReferrers().isEmpty();
-                if (kept && removable) {
-                    dataSet.removePrimitive(way);
-                    continue;
+                if (extra.getNodesCount() == 0 && extra.getReferrers().isEmpty()) {
+                    dataSet.removePrimitive(extra);
+                } else {
+                    Logging.warn("Keeping an extra transform matrix way that has nodes or referrers: "
+                            + extra.getUniqueId());
+                    extra.setKeys(tags);
                 }
-                if (kept) {
-                    Logging.log(Level.WARNING, "Keeping an extra transform matrix way that has nodes or referrers: "
-                            + way.getUniqueId(), null);
-                }
-                way.removeAll();
-                way.setKeys(tags);
-                kept = true;
             }
         }
         catch (Exception e) {
