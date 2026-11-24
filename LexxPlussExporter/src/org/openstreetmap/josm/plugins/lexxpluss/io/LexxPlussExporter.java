@@ -270,22 +270,29 @@ public class LexxPlussExporter extends OsmExporter {
                 if (extra == survivor) {
                     continue;
                 }
-                // setDeleted() is not enough: OsmWriter still writes a deleted way that has a positive id.
-                // removePrimitive() leaves references dangling, so only a way nothing depends on is removed.
-                if (extra.getNodesCount() == 0 && extra.getReferrers().isEmpty()) {
+                if (extra.isDeleted()) {
+                    // OsmWriter still writes a deleted way that has a positive id, so strip its tags.
+                    // Removing it would break undo: DeleteCommand.undoCommand requires it in the dataset.
+                    removeKeys(extra, tags);
+                } else if (extra.getNodesCount() == 0 && extra.getReferrers().isEmpty()) {
+                    // removePrimitive() leaves references dangling, so only a way nothing depends on is removed.
                     dataSet.removePrimitive(extra);
                 } else {
-                    // A way with nodes is real map data: drop only the transform tags and keep its own.
+                    // A way that other data uses keeps its own tags and loses only the transform tags.
                     Logging.warn("Removing transform tags from a way that has nodes or referrers: "
                             + extra.getUniqueId());
-                    for (String key : tags.keySet()) {
-                        extra.remove(key);
-                    }
+                    removeKeys(extra, tags);
                 }
             }
         }
         catch (Exception e) {
             Logging.log(Level.WARNING, "Could not update the transform matrix way.", e);
+        }
+    }
+
+    private static void removeKeys(Way way, TagMap tags) {
+        for (String key : tags.keySet()) {
+            way.remove(key);
         }
     }
 
