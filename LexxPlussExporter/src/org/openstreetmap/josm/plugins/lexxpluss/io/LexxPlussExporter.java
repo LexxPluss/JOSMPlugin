@@ -277,7 +277,7 @@ public class LexxPlussExporter extends OsmExporter {
             }
         }
         catch (Exception e) {
-            // do nothing
+            Logging.log(Level.WARNING, "Could not update the transform matrix way.", e);
         }
     }
 
