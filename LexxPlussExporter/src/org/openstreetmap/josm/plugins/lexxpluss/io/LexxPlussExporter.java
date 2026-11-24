@@ -227,37 +227,47 @@ public class LexxPlussExporter extends OsmExporter {
             super.doSave(file, layer);
             return;
         }
-        try {
-			List<Way> ways = new ArrayList<Way>(dataSet.getWays());
-			boolean exist = false;
-			for (Way way: ways) {
-				TagMap ts = way.getKeys();
-				for (Tag tag: ts.getTags()) {
-					if (tag.getKey() == "transform matrix") {
-						exist = true;
-						way.removeAll();
-						way.setKeys(tags);
-						break;
-					}
-				}
-				if (exist) {
-					break;
-				}
-			}
-			if (!exist) {
-				// create new Way
-				Way w = new Way();
-				w.setKeys(tags);
-				dataSet.addPrimitive(w);
-			}
-        }
-        catch (Exception e) {
-        	// do nothing
-        }
+        updateTransformMatrixWay(dataSet, tags);
         dataSet.endUpdate();
         //dataSet.unlock();
         // 基底クラスのファイル保存メソッドを実行する
         super.doSave(file, layer);
+    }
+
+    /**
+     * Writes the transform tags into the dataset's transform matrix way,
+     * creating the way if the dataset has none.
+     * @param dataSet dataset to be saved
+     * @param tags transform tags, including the "transform matrix" key
+     */
+    static void updateTransformMatrixWay(DataSet dataSet, TagMap tags) {
+        try {
+            List<Way> ways = new ArrayList<Way>(dataSet.getWays());
+            boolean exist = false;
+            for (Way way: ways) {
+                TagMap ts = way.getKeys();
+                for (Tag tag: ts.getTags()) {
+                    if (tag.getKey() == "transform matrix") {
+                        exist = true;
+                        way.removeAll();
+                        way.setKeys(tags);
+                        break;
+                    }
+                }
+                if (exist) {
+                    break;
+                }
+            }
+            if (!exist) {
+                // create new Way
+                Way w = new Way();
+                w.setKeys(tags);
+                dataSet.addPrimitive(w);
+            }
+        }
+        catch (Exception e) {
+            // do nothing
+        }
     }
 
     /**
