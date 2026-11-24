@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -20,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -60,9 +61,11 @@ public class LexxPlussExporter extends OsmExporter {
     /**
      * Duplicate matrix ways whose transform tags were removed. They stay in the dataset because
      * commands on the undo/redo stack may point at them, but are left out of the file while empty.
+     * Way.equals compares only the id, so the value holds the way itself to tell apart ways with the same id
+     * in other layers.
      */
-    private static final Set<Way> STRIPPED_WAYS =
-            Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<Way, Boolean>()));
+    private static final Map<Way, WeakReference<Way>> STRIPPED_WAYS =
+            Collections.synchronizedMap(new WeakHashMap<>());
     
     public LexxPlussExporter() {
         super(new ExtensionFileFilter(EXTENSION, EXTENSION, 
@@ -290,7 +293,7 @@ public class LexxPlussExporter extends OsmExporter {
                 // Only the tags go; the way stays. Commands on the undo/redo stack may still point at it,
                 // and they throw if it left the dataset (removePrimitive) or was already deleted (setDeleted).
                 removeKeys(extra, tags);
-                STRIPPED_WAYS.add(extra);
+                STRIPPED_WAYS.put(extra, new WeakReference<>(extra));
                 if (!extra.isDeleted() && (extra.getNodesCount() > 0 || !extra.getReferrers().isEmpty())) {
                     Logging.warn("Removed transform tags from a way that has nodes or referrers: "
                             + extra.getUniqueId());
@@ -304,6 +307,7 @@ public class LexxPlussExporter extends OsmExporter {
 
     /**
      * Writes the dataset like {@link OsmExporter#doSave}, but leaves out the empty ways in {@link #STRIPPED_WAYS}.
+     * It does not use OsmWriterFactory, because shouldWrite cannot be overridden through it.
      * @param file file to write
      * @param dataSet dataset to write
      * @throws IOException if the file cannot be written
@@ -330,8 +334,11 @@ public class LexxPlussExporter extends OsmExporter {
 
     private static boolean isEmptyStrippedWay(OsmPrimitive osm) {
         // A stripped way that undo restored or the user reused has tags or nodes again, and is written.
-        return osm instanceof Way way && STRIPPED_WAYS.contains(way) && !way.hasKeys()
-                && way.getNodesCount() == 0 && !isRelationMember(way);
+        if (!(osm instanceof Way way) || way.hasKeys() || way.getNodesCount() > 0) {
+            return false;
+        }
+        WeakReference<Way> stripped = STRIPPED_WAYS.get(way);
+        return stripped != null && stripped.get() == way && !isRelationMember(way);
     }
 
     private static boolean isRelationMember(Way way) {
