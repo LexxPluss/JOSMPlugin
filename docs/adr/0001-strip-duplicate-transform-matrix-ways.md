@@ -1,6 +1,6 @@
 # 1. Remove duplicate transform matrix ways from the saved file, not from the dataset
 
-- Status: Accepted
+- Status: Accepted; which matrix way the readers pick decided by [0002](0002-readers-pick-the-exported-matrix-way.md)
 - Date: 2026-11-24
 - Deciders: JOSMPlugin maintainers
 - Context: IOP-3335

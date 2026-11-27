@@ -47,64 +47,64 @@ public class LexxPlussReader extends OsmReader {
 
 	public boolean readTransformInfo(InputStream source)
 	{
-		boolean exist = false;
+		// LexxPlussImporter reuses one reader for every import. Without this, a file without a usable
+		// matrix way would be converted with the previous file's transform.
+		this.m_transform = null;
+		// Same choice as LexxPlussExporter: a live way without nodes, then the highest id
+		// (docs/adr/0002-readers-pick-the-exported-matrix-way.md). JOSM writes and renumbers new ways
+		// in id order, so the highest id in the file is the highest unique id the exporter compares.
+		TagMap best = null;
+		long bestId = Long.MIN_VALUE;
+		boolean bestHasNodes = false;
 		try (InputStreamReader ir = UTFInputStreamReader.create(source)) {
 			XMLStreamReader local_parser = XmlUtils.newSafeXMLInputFactory().createXMLStreamReader(ir);
-			System.out.println("");
-			// parse OSM
-			if (XMLStreamConstants.START_ELEMENT == local_parser.next() && "osm".equals(local_parser.getLocalName())) {
-				while(local_parser.hasNext()) {
+			while (local_parser.hasNext()) {
+				if (local_parser.next() != XMLStreamConstants.START_ELEMENT || !"way".equals(local_parser.getLocalName())) {
+					continue;
+				}
+				String idValue = local_parser.getAttributeValue(null, "id");
+				boolean deleted = "delete".equals(local_parser.getAttributeValue(null, "action"));
+				TagMap tags = new TagMap();
+				boolean hasNodes = false;
+				int depth = 1;
+				while (depth > 0 && local_parser.hasNext()) {
 					int event = local_parser.next();
 					if (event == XMLStreamConstants.START_ELEMENT) {
-						switch (local_parser.getLocalName()) {
-						case "way":
-							{
-								TagMap tags = new TagMap();
-								while (local_parser.hasNext()) {
-									int event_w = local_parser.next();
-									if (event_w == XMLStreamConstants.START_ELEMENT) {
-										if ("tag".equals(local_parser.getLocalName())) {
-											String key = local_parser.getAttributeValue(null, "k");
-											String value = local_parser.getAttributeValue(null, "v");
-											tags.put(key, value);
-											if ("transform matrix".equals(key)) {
-												exist = true;
-											}
-											// jump to end
-											while(XMLStreamConstants.END_ELEMENT == local_parser.next());
-										}
-									}
-									else if (event_w == XMLStreamConstants.END_ELEMENT) {
-										break;
-									}
-								}
-								if (exist) {
-									// set matrix here
-									this.setTransformInfo(tags);
-								}
-							}
-							break;
-						
-						default:
-							{
-								// jump to end
-								while(XMLStreamConstants.END_ELEMENT == local_parser.next());							
-							}
-							break;
+						depth++;
+						if ("nd".equals(local_parser.getLocalName())) {
+							hasNodes = true;
+						} else if ("tag".equals(local_parser.getLocalName())) {
+							tags.put(local_parser.getAttributeValue(null, "k"), local_parser.getAttributeValue(null, "v"));
 						}
-						if (exist) {
-							break;
-						}
+					} else if (event == XMLStreamConstants.END_ELEMENT) {
+						depth--;
 					}
+				}
+				if (deleted || !tags.containsKey("transform matrix")) {
+					continue;
+				}
+				long id;
+				try {
+					id = Long.parseLong(idValue);
+				} catch (NumberFormatException e) {
+					continue;
+				}
+				if (best == null || (hasNodes != bestHasNodes ? !hasNodes : id > bestId)) {
+					best = tags;
+					bestId = id;
+					bestHasNodes = hasNodes;
 				}
 			}
 			local_parser.close();
 		}
 		catch(Exception e) {
-			System.out.println("");
 			return false;
 		}
-		return exist;
+		if (best == null) {
+			return false;
+		}
+		this.setTransformInfo(best);
+		return true;
 	}
 
 	private void setTransformInfo(TagMap tags) {

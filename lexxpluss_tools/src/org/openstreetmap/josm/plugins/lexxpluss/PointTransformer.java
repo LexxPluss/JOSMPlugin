@@ -7,7 +7,7 @@
 package org.openstreetmap.josm.plugins.lexxpluss;
 
 import java.awt.geom.AffineTransform;
-import java.util.stream.Collectors;
+import java.util.Comparator;
 import org.openstreetmap.josm.data.coor.EastNorth;
 import org.openstreetmap.josm.data.osm.DataSet;
 import org.openstreetmap.josm.data.osm.Way;
@@ -160,10 +160,13 @@ class PointTransformer {
      * @return the way with the transform matrix
      */
     static Way getTransformMatrixWay(DataSet dataSet) {
-        var ways = dataSet.getWays().stream()
-                .filter(w -> w.hasKey("transform matrix"))
-                .collect(Collectors.toList());
-        return ways.isEmpty() ? null : ways.get(0);
+        // Same choice as LexxPlussExporter.updateTransformMatrixWay, so a file with duplicate matrix ways
+        // is read with the transform the exporter keeps (docs/adr/0002-readers-pick-the-exported-matrix-way.md).
+        return dataSet.getWays().stream()
+                .filter(w -> w.hasKey("transform matrix") && !w.isDeleted())
+                .max(Comparator.comparing((Way w) -> w.getNodesCount() == 0)
+                        .thenComparingLong(Way::getUniqueId))
+                .orElse(null);
     }
 
     /**
