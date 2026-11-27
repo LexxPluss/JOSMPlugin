@@ -7,4 +7,5 @@ with a new one and link both.
 
 | # | Title | Status |
 |---|-------|--------|
-| [0001](0001-strip-duplicate-transform-matrix-ways.md) | Remove duplicate transform matrix ways from the saved file, not from the dataset | Accepted |
+| [0001](0001-strip-duplicate-transform-matrix-ways.md) | Remove duplicate transform matrix ways from the saved file, not from the dataset | Accepted; which matrix way the readers pick decided by [0002](0002-readers-pick-the-exported-matrix-way.md) |
+| [0002](0002-readers-pick-the-exported-matrix-way.md) | Readers pick the transform matrix way that the exporter keeps | Accepted |
