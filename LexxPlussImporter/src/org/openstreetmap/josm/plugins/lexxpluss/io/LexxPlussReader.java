@@ -52,7 +52,7 @@ public class LexxPlussReader extends OsmReader {
 		// in id order, so the highest id in the file is the highest unique id the exporter compares.
 		TagMap best = null;
 		long bestId = Long.MIN_VALUE;
-		boolean bestHasNodes = true;
+		boolean bestHasNodes = false;
 		try (InputStreamReader ir = UTFInputStreamReader.create(source)) {
 			XMLStreamReader local_parser = XmlUtils.newSafeXMLInputFactory().createXMLStreamReader(ir);
 			while (local_parser.hasNext()) {
@@ -62,14 +62,14 @@ public class LexxPlussReader extends OsmReader {
 				long id = Long.parseLong(local_parser.getAttributeValue(null, "id"));
 				boolean deleted = "delete".equals(local_parser.getAttributeValue(null, "action"));
 				TagMap tags = new TagMap();
-				int nodes = 0;
+				boolean hasNodes = false;
 				int depth = 1;
 				while (depth > 0 && local_parser.hasNext()) {
 					int event = local_parser.next();
 					if (event == XMLStreamConstants.START_ELEMENT) {
 						depth++;
 						if ("nd".equals(local_parser.getLocalName())) {
-							nodes++;
+							hasNodes = true;
 						} else if ("tag".equals(local_parser.getLocalName())) {
 							tags.put(local_parser.getAttributeValue(null, "k"), local_parser.getAttributeValue(null, "v"));
 						}
@@ -80,8 +80,7 @@ public class LexxPlussReader extends OsmReader {
 				if (deleted || !tags.containsKey("transform matrix")) {
 					continue;
 				}
-				boolean hasNodes = nodes > 0;
-				if (best == null || (bestHasNodes && !hasNodes) || (bestHasNodes == hasNodes && id > bestId)) {
+				if (best == null || (hasNodes != bestHasNodes ? !hasNodes : id > bestId)) {
 					best = tags;
 					bestId = id;
 					bestHasNodes = hasNodes;
