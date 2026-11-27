@@ -62,7 +62,7 @@ public class LexxPlussReader extends OsmReader {
 				if (local_parser.next() != XMLStreamConstants.START_ELEMENT || !"way".equals(local_parser.getLocalName())) {
 					continue;
 				}
-				long id = Long.parseLong(local_parser.getAttributeValue(null, "id"));
+				String idValue = local_parser.getAttributeValue(null, "id");
 				boolean deleted = "delete".equals(local_parser.getAttributeValue(null, "action"));
 				TagMap tags = new TagMap();
 				boolean hasNodes = false;
@@ -81,6 +81,12 @@ public class LexxPlussReader extends OsmReader {
 					}
 				}
 				if (deleted || !tags.containsKey("transform matrix")) {
+					continue;
+				}
+				long id;
+				try {
+					id = Long.parseLong(idValue);
+				} catch (NumberFormatException e) {
 					continue;
 				}
 				if (best == null || (hasNodes != bestHasNodes ? !hasNodes : id > bestId)) {
