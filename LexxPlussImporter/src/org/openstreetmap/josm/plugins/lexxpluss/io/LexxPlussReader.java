@@ -47,6 +47,9 @@ public class LexxPlussReader extends OsmReader {
 
 	public boolean readTransformInfo(InputStream source)
 	{
+		// LexxPlussImporter reuses one reader for every import. Without this, a file without a usable
+		// matrix way would be converted with the previous file's transform.
+		this.m_transform = null;
 		// Same choice as LexxPlussExporter: a live way without nodes, then the highest id
 		// (docs/adr/0002-readers-pick-the-exported-matrix-way.md). JOSM writes and renumbers new ways
 		// in id order, so the highest id in the file is the highest unique id the exporter compares.
