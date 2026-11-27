@@ -60,8 +60,9 @@ Negative / trade-offs:
   source, so a change to the rule must be made in all three.
 - The importer's match depends on the order in which JOSM writes and renumbers ids. A file written by
   another tool with matrix ways in a different id order can still be read with another way.
-- A dataset whose only matrix way is deleted now has no transform. Before, PointTransformer used the
-  deleted way.
+- A file whose only matrix way is deleted now has no transform. Before, both readers used the deleted
+  way. PointTransformer shows its "No ways with transform matrix found." notification, and the importer
+  leaves nodes that have only `X_image`/`Y_image` without coordinates.
 
 ## Confirmation
 
